@@ -1,4 +1,4 @@
-// Test file fpor utilities.cpp
+// Test file for utilities.cpp
 
 #include<iostream>
 #include"utilities.h"
@@ -7,32 +7,38 @@ using namespace std;
 
 extern "C" double dtrsyl_(char* trana, char* tranb, int* isgn, int* orda, int* ordb, double* A, int* lda, double* B, int* ldb, double* C, int* ldc, double* scale, int* info);
 
+
 int main()
 {
-    double* p;
-    double *A[3];
-    double *B[3];
-
-
-    int dimA = 3;
-    int dimB = 3;
+  
+    double *test[SIZE];
+    double epsilon = 0.50;
     
-    for(int i=0; i<3; i++)
+    
+    for(int i=0; i<SIZE; i++)
     {
-        A[i] = new double[3]();
-        B[i] = new double[3]();
+        test[i] = new double[SIZE];
+        for(int j=0; j<SIZE; j++)
+        {
+            test[i][i] = 1;
+        }
     }
-        
-    //cout << A[1][1] << endl;
+    test[1][2] = -4; 
+    test[2][1] = 3;
     
-    p = lyap_P(A, dimA, B, dimB);
+    cout << "Epsilon = " << epsilon << endl; 
+    cout << "test matrix:" << endl; 
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            cout << test[i][j] << "    ";
+        }
+        cout << endl; 
+    }
+    cout << endl;
     
-    
-  /*  
-    cout << p[0][0 <<endl;
-    cout << p[1][0] <<endl;
-    cout << p[2][0] <<endl; 
-    */
+    double ssa = SimpleSSA(test, epsilon);  
     
     return 0; 
 }
