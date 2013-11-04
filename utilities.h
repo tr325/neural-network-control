@@ -9,8 +9,7 @@ void MatMult(double A[], double B[], double C[]);
 
 /*  Finds the value of the smoothed spectral abcissa using  */
 /*  the Newton-Raphson root-finding technique               */
-double Newton(double *Q[], double *P[], double eps, double sA);
-
+bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double &s);
 
 /*  Calculates the trace of a matrix                    */
 double Trace(double *A[], int dimA);

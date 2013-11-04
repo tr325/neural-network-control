@@ -20,7 +20,7 @@ extern "C" double dgemm_(char* trana, char* tranb, int* m, int* n, int* k, doubl
 double SimpleSSA(double *W[], double eps)
 {
     double precision; 
-    precision = 0.000001;
+    precision = 0.01;
     
     // Generate A = (W-sI) 
     double *I[SIZE], *A[SIZE], *A_t[SIZE];
@@ -31,7 +31,9 @@ double SimpleSSA(double *W[], double eps)
     double spectralAbcissa;
     double s, sOld;
     int l, loopcount;
+    bool conv;
     
+    conv = false;
     l = 0;
     loopcount = 0;
     s = 0.00;
@@ -49,7 +51,7 @@ double SimpleSSA(double *W[], double eps)
     
     
     // main loop for N-R root finding method
-    while(abs(s - sOld) > precision)
+    while(!conv)
     {
         sOld = s; 
         
@@ -95,7 +97,7 @@ double SimpleSSA(double *W[], double eps)
         CArrayConvert(fQ, Q, SIZE); 
        
         // use Newton-Raphson method to find new s value 
-        s = Newton(Q, P, eps, spectralAbcissa);  
+        conv = Newton(Q, P, eps, spectralAbcissa, precision, s);  
         
         cout << "s = " << s << ", sOld = " << sOld <<endl;
         loopcount++;
@@ -106,10 +108,11 @@ double SimpleSSA(double *W[], double eps)
     return s; 
 }
 
+
 /*  Finds the value of s for the next iteration of the loop     */
-double Newton(double *Q[], double *P[], double eps, double sA)
+bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double &s)
 {
-    double val, grad, e, s; 
+    double val, grad, e; 
     double *fP, *fQ, *fPQ;
     double *PQ[SIZE]; 
     
@@ -126,17 +129,24 @@ double Newton(double *Q[], double *P[], double eps, double sA)
     
     val = Trace(Q, SIZE); 
     e = 1/eps;
-    grad = -2*Trace(PQ, SIZE); 
-    s = (1/grad)*(e - val); 
-     
-    
-    if(s < sA)
+    cout << "e = " << e << ", and val = " << val <<endl; 
+    if(!(abs(val - e) < prec))
     {
-        s = sA + eps*eps*eps*eps; 
+        grad = -2*Trace(PQ, SIZE); 
+        s = s + 0.1*(1/grad)*(e - val);         
+        cout << (1/grad)*(e - val) << endl;
+        if(s < sA)
+        {
+            cout << "brbrbrbrb" << endl; 
+            s = sA + e*e;
+        }
+        cout << "gradient = " <<grad <<", s = " << s << endl;  
+        return false;
     }
-    cout << "gradient = " <<grad <<", s = " << s << endl;  
-    
-    return s; 
+    else 
+    {
+        return true; 
+    } 
 }    
 
 /*  Performs matrix multiplication of matrices A and B,     
