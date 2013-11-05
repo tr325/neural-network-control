@@ -1,7 +1,8 @@
 // Test file for utilities.cpp
 
-#include<iostream>
+#include<fstream>
 #include"utilities.h"
+#include<iostream>
 
 using namespace std; 
 
@@ -12,7 +13,7 @@ int main()
 {
   
     double *test[SIZE], *test2[SIZE], *test3[SIZE];
-    double epsilon = 200;
+    double epsilon = 1;
     
     
     for(int i=0; i<SIZE; i++)
@@ -32,34 +33,12 @@ int main()
     test2[2][1] = 10;
     
     cout << "Epsilon = " << epsilon << endl; 
-    cout << "test matrix:" << endl; 
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            cout << test[i][j] << "    ";
-        }
-        cout << endl; 
-    }
-    cout << endl;
+
     
-    double *fTest, *fTest2, *fTest3;
-    fTest = FArrayConvert(test, SIZE);
-    fTest2 = FArrayConvert(test2, SIZE);
-    fTest3 = FArrayConvert(test3, SIZE); 
-    MatMult(fTest, fTest2, fTest3);
-    CArrayConvert(fTest3, test3, SIZE);
-    
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            cout << test3[i][j] << "    ";
-        }
-        cout << endl; 
-    }
-    cout << endl;
-    double ssa = SimpleSSA(test, epsilon);  
+    ifstream myfile;
+    myfile.open("inputMatrix.ascii");
+    loadMat(myfile, test, SIZE);
+    double ssa = SimpleSSA(test, epsilon);    
     
     return 0; 
 }

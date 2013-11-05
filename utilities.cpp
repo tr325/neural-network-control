@@ -1,35 +1,29 @@
 /* File containing utility functions for Neural Network simulations   */
 
 #include<iostream>
+#include<fstream>
 #include<cmath>
 #include"utilities.h"
 
 using namespace std; 
 
 
-
 extern "C" double dtrsyl_(char* trana, char* tranb, int* isgn, int* orda, int* ordb, double* A, int* lda, double* B, int* ldb, double* C, int* ldc, double* scale, int* info);
-
 extern "C" double dgees_(char* jobvs, char* sort, bool* select, int* n, double* A, int* lda, int* sdim, double* wr, double* wi, double* vs, int* ldvs, double* work, int* lwork, bool* bwork, int* info);
-
 extern "C" double dgemm_(char* trana, char* tranb, int* m, int* n, int* k, double* alpha, double* A, int* lda, double* B, int* ldb, double* beta, double* C, int* ldc);
 
 
-/*  Takes inputs the required epsilon (larger->smoother SSA) and the input matrix A  */ 
-/*  Calculates the value of the SSA using the lyapunov eqn solver  functions  */ 
+/*  Takes inputs the required epsilon (larger->smoother SSA) and the input matrix A 
+*   Calculates the value of the SSA using the lyapunov eqn solver  functions        */ 
 double SimpleSSA(double *W[], double eps)
 {
     double precision; 
     precision = 0.01;
     
     // Generate A = (W-sI) 
-    double *I[SIZE], *A[SIZE], *A_t[SIZE];
-    double *fP, *fQ;
-    double *fA;
-    double *fA_t; 
-    double *P[SIZE], *Q[SIZE];
-    double spectralAbcissa;
-    double s, sOld;
+    double *I[SIZE], *A[SIZE], *A_t[SIZE], *P[SIZE], *Q[SIZE];
+    double *fP, *fQ, *fA, *fA_t;
+    double spectralAbcissa, s, sOld;
     int l, loopcount;
     bool conv;
     
@@ -43,7 +37,7 @@ double SimpleSSA(double *W[], double eps)
     {
         I[i] = new double[SIZE];
         A[i] = new double[SIZE];
-        A_t[i]= new double[SIZE]; 
+        A_t[i] = new double[SIZE]; 
         P[i] = new double[SIZE];
         Q[i] = new double[SIZE];
         I[i][i] = 1;                // The rest of the array default initialises to 0
@@ -99,11 +93,17 @@ double SimpleSSA(double *W[], double eps)
         // use Newton-Raphson method to find new s value 
         conv = Newton(Q, P, eps, spectralAbcissa, precision, s);  
         
-        cout << "s = " << s << ", sOld = " << sOld <<endl;
+        //cout << "s = " << s << ", sOld = " << sOld <<endl;
         loopcount++;
+        if(s == sOld)
+        {
+            cout << "desired SSA is below threshold limit" << endl;
+            break;
+        }
     }   
     
     cout << endl << "Smoothed spectral abcissa value = " << s << endl; 
+    cout << "Spectral abcissa value = " << spectralAbcissa << endl; 
     cout << "Loop ran " << loopcount << " times" <<endl; 
     return s; 
 }
@@ -137,8 +137,7 @@ bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double
         cout << (1/grad)*(e - val) << endl;
         if(s < sA)
         {
-            cout << "brbrbrbrb" << endl; 
-            s = sA + e*e;
+            s = sA + (eps*eps*eps);
         }
         cout << "gradient = " <<grad <<", s = " << s << endl;  
         return false;
@@ -260,6 +259,31 @@ void Schur(double *A[])
     return;    
 }
 
+/* Populates a 2D array with the data held in an ascii file */ 
+void loadMat(ifstream &file, double *A[], int matDim)
+{
+    if(file.is_open())
+    {
+        cout << "File is open" << endl;
+        for(int i=0; i<matDim; i++)
+        {
+            for(int j=0; j<matDim; j++)
+            {
+                if(file.eof())
+                {
+                    cout << "ERROR: file ended before expected" <<endl; 
+                    break;
+                }
+                file >> A[i][j];
+            }
+        } 
+    }
+    else
+    {
+        cout << "The file isn't open for reading" << endl;
+    }
+    return;
+}
 
 /* Solves lyapunov eqn for 0 = L(P,A,U,s)   */ 
 /* Returns pointer to P                     */

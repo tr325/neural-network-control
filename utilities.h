@@ -1,5 +1,12 @@
+#include<fstream>
 
-const int SIZE = 3;
+using namespace std; 
+
+const int SIZE = 50;
+
+
+/* Populates a 2D array with the data held in an ascii file */ 
+void loadMat(ifstream &file, double* A[], int matDim);
 
 
 /*  Performs matrix multiplication of matrices A and B,     
