@@ -13,7 +13,7 @@ int main()
 {
   
     double *test[SIZE], *test2[SIZE], *test3[SIZE];
-    double epsilon = 1;
+    double epsilon = 0.1;
     
     
     for(int i=0; i<SIZE; i++)

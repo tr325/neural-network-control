@@ -1,6 +1,7 @@
 /* File containing utility functions for Neural Network simulations   */
 
 #include<iostream>
+#include<iomanip>
 #include<fstream>
 #include<cmath>
 #include"utilities.h"
@@ -18,7 +19,7 @@ extern "C" double dgemm_(char* trana, char* tranb, int* m, int* n, int* k, doubl
 double SimpleSSA(double *W[], double eps)
 {
     double precision; 
-    precision = 0.01;
+    precision = 0.000001;
     
     // Generate A = (W-sI) 
     double *I[SIZE], *A[SIZE], *A_t[SIZE], *P[SIZE], *Q[SIZE];
@@ -79,7 +80,7 @@ double SimpleSSA(double *W[], double eps)
         if(l == 0)
         {
             spectralAbcissa = MaxDiag(A, SIZE);
-            cout << "Spectral abcissa value = " << spectralAbcissa <<endl; 
+            cout << setprecision(10) <<"Spectral abcissa value = " << spectralAbcissa <<endl; 
             l++;
         }            
         
@@ -95,11 +96,11 @@ double SimpleSSA(double *W[], double eps)
         
         //cout << "s = " << s << ", sOld = " << sOld <<endl;
         loopcount++;
-        if(s == sOld)
+       /* if(s == sOld)
         {
             cout << "desired SSA is below threshold limit" << endl;
             break;
-        }
+        }*/
     }   
     
     cout << endl << "Smoothed spectral abcissa value = " << s << endl; 
@@ -129,17 +130,17 @@ bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double
     
     val = Trace(Q, SIZE); 
     e = 1/eps;
-    cout << "e = " << e << ", and val = " << val <<endl; 
+  //  cout << "e = " << e << ", and val = " << val <<endl; 
     if(!(abs(val - e) < prec))
     {
         grad = -2*Trace(PQ, SIZE); 
-        s = s + 0.1*(1/grad)*(e - val);         
-        cout << (1/grad)*(e - val) << endl;
+        s = s + (1/grad)*(e - val);         
+       // cout << (1/grad)*(e - val) << endl;
         if(s < sA)
         {
-            s = sA + (eps*eps*eps);
+            s = sA + 0.1;
         }
-        cout << "gradient = " <<grad <<", s = " << s << endl;  
+       // cout << "gradient = " <<grad <<", s = " << s <<", val = " <<val << endl;  
         return false;
     }
     else 
@@ -209,7 +210,7 @@ double* FArrayConvert(double *A[], int dimA)
     {
         for(int j=0; j<dimA; j++)
         {
-            fArray[3*i + j] = A[j][i];
+            fArray[dimA*i + j] = A[j][i];
         }
     }
     
