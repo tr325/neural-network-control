@@ -18,7 +18,7 @@ void MatMult(double A[], double B[], double C[]);
 /*  the Newton-Raphson root-finding technique               */
 bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double &s);
 
-/*  Calculates the trace of a matrix                    */
+/*  Calculates the trace of a matrix                        */
 double Trace(double *A[], int dimA);
 
 
@@ -28,7 +28,7 @@ double MaxDiag(double *A[], int dimA);
 
 /* Solves lyapunov eqn for 0 = L(P,A,U,s)   */ 
 /* Returns pointer to P                     */
-double* Lyap(double A[], double B[]);
+double* Lyap(double A[], bool TRAN);
 
 
 /* Returns the smoothed spectral abcissa for W, when given a specific  */ 
@@ -37,7 +37,7 @@ double SimpleSSA(double *W[], double eps);
 
 
 /* Converts the input matrix to Schur form  */
-void Schur(double *A[]);
+void Schur(double A[]);
 
 
 /*  Converts input matrix to Column-major 1-D array for     */
