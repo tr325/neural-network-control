@@ -4,6 +4,7 @@
 #include<iomanip>
 #include<fstream>
 #include<cmath>
+#include<cctype>
 #include"utilities.h"
 
 using namespace std; 
@@ -16,11 +17,10 @@ extern "C" double dgemm_(char* trana, char* tranb, int* m, int* n, int* k, doubl
 
 /*  Takes inputs the required epsilon (larger->smoother SSA) and the input matrix A 
 *   Calculates the value of the SSA using the lyapunov eqn solver functions         */ 
-double SimpleSSA(double *W[], double eps)
+double SimpleSSA(double *W[], double eps, int SIZE)
 {
     double precision; 
     precision = 0.000001;
-    
     
     double *I[SIZE], *A[SIZE], *P[SIZE], *Q[SIZE];
     double *fP, *fQ, *fA;
@@ -65,7 +65,7 @@ double SimpleSSA(double *W[], double eps)
         
         // convert A and A_t to Schur form using dgees_
         fA = FArrayConvert(A, SIZE);
-        Schur(fA);
+        Schur(fA, SIZE);
         CArrayConvert(fA, A, SIZE);
 
         // Find SA value (max value of diagonals of Schur form) 
@@ -92,52 +92,15 @@ double SimpleSSA(double *W[], double eps)
         else
         {
             // Solve lyapunov equations for P and Q            
-            fQ = Lyap(fA, true);
+            fQ = Lyap(fA, true, SIZE);
             CArrayConvert(fQ, Q, SIZE);
             delete[] fQ;
-            fP = Lyap(fA, false);
+            fP = Lyap(fA, false, SIZE);
             CArrayConvert(fP, P, SIZE);
             delete[] fP;
-             /*           
-            if(loopcount ==3)
-            {    
-                ofstream opfile;
-                opfile.open("TESTPrintShiftA");
-                for(int i=0; i<SIZE; i++)
-                {
-                    for(int j=0; j<SIZE; j++)
-                    {
-                        opfile << A[i][j] << " ";
-                    }
-                    opfile <<endl;
-                }
-                
-                ofstream opfile2;
-                opfile2.open("TESTPrintQ");
-                for(int i=0; i<SIZE; i++)
-                {
-                    for(int j=0; j<SIZE; j++)
-                    {
-                        opfile2 << Q[i][j] << " ";
-                    }
-                    opfile2 <<endl;
-                }
-                
-                ofstream opfile3;
-                opfile3.open("TESTPrintP");
-                for(int i=0; i<SIZE; i++)
-                {
-                    for(int j=0; j<SIZE; j++)
-                    {
-                        opfile3 << P[i][j] << " ";
-                    }
-                    opfile3 <<endl;
-                }
             
-            }
-            */
             // use Newton-Raphson method to find new s value            
-            conv = Newton(Q, P, eps, spectralAbcissa, precision, s);
+            conv = Newton(Q, P, eps, spectralAbcissa, precision, s, SIZE);
         }
         
         delete[] fA;
@@ -160,7 +123,7 @@ double SimpleSSA(double *W[], double eps)
 
 
 /*  Finds the value of s for the next iteration of the loop     */
-bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double &s)
+bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double &s, int SIZE)
 {
     double val, grad, e;
     double *fP, *fQ, *fPQ;
@@ -177,7 +140,7 @@ bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double
     fP = FArrayConvert(P, SIZE);
     fQ = FArrayConvert(Q, SIZE);
     fPQ = FArrayConvert(PQ, SIZE);
-    MatMult(fP, fQ, fPQ);
+    MatMult(fP, fQ, fPQ, SIZE);
     CArrayConvert(fPQ, PQ, SIZE);
     delete[] fP;
     delete[] fPQ;
@@ -213,7 +176,7 @@ bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double
 
 /*  Performs matrix multiplication of matrices A and B,     
  *  storing the result in C                                 */
-void MatMult(double A[], double B[], double C[])
+void MatMult(double A[], double B[], double C[], int SIZE)
 {
     char TRANA, TRANB; 
     int M, N, K, LDA, LDB, LDC; 
@@ -295,7 +258,7 @@ void CArrayConvert(double fA[], double *cA[], int dimCA)
 /*  Converts input matrix A to Schur form (req for dtrsyl)  
  *  input matrix should be coverted for passing to Fortran by 
  *  FArrayConvert() before being passed to this funciton        */
-void Schur(double A[])
+void Schur(double A[], int SIZE)
 {
     char JOBVS, SORT;
     int N, LDA, LDVS, LWORK, SDIM, INFO;  
@@ -324,23 +287,30 @@ void Schur(double A[])
 }
 
 /* Populates a 2D array with the data held in an ascii file */ 
-void loadMat(ifstream &file, double *A[], int matDim)
+void loadMat(ifstream &file, double *A[], int SIZE)
 {
+    int j=0; 
+    int i=0;
+
     if(file.is_open())
     {
+        
         //cout << "File is open" << endl;
-        for(int i=0; i<matDim; i++)
+
+        for(i=0; i<SIZE; i++)
         {
-            for(int j=0; j<matDim; j++)
+            cout << i <<endl;
+            for(j=0; j<SIZE; j++)
             {
                 if(file.eof())
                 {
                     cout << "ERROR: file ended before expected" <<endl; 
                     break;
                 }
+                //cout << "pleep" <<endl; 
                 file >> A[i][j];
             }
-        } 
+        }
     }
     else
     {
@@ -349,11 +319,33 @@ void loadMat(ifstream &file, double *A[], int matDim)
     return;
 }
 
+/* Returns dimension of input matrix from the file  */
+int MatSize(ifstream &file)
+{
+    int numlines = 0;
+    char c;
+    string s;
+    while(!file.eof())
+    {
+        getline(file, s);
+        numlines++;
+    }
+    
+    numlines--;  // the eof char counts as an extra line
+    
+    file.clear();
+    file.seekg(0);
+
+    return numlines;
+}
+
+
+
 /* Solves lyapunov eqn for 0 = L(P,A,U,s)       */ 
 /* Returns pointer to P                         */
 /* Solves: (W-sI)P + P(W-sI)^T = -I             */
 /* Form:  A*P + P*B = C                         */
-double* Lyap(double A[], bool TRAN)
+double* Lyap(double A[], bool TRAN, int SIZE)
 {
     char TRANA, TRANB;
     int ISGN, ORDA, ORDB, LDA, LDB, LDC, INFO;

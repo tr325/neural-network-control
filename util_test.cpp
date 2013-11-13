@@ -10,11 +10,16 @@ extern "C" double dtrsyl_(char* trana, char* tranb, int* isgn, int* orda, int* o
 
 int main()
 {
-    double *test[SIZE];
+    ifstream ipfile;
+    int SIZE;
+    
+    ipfile.open("inputMatrix.ascii");
+    SIZE = MatSize(ipfile); 
+
     double epsilon = 0.02;
     ofstream opfile;
-    ifstream ipfile;
     
+    double *test[SIZE];
     for(int i=0; i<SIZE; i++)
     {
         test[i] = new double[SIZE];
@@ -25,7 +30,6 @@ int main()
     cout << "SIZE = " <<SIZE <<endl;
 
 
-    ipfile.open("inputMatrix.ascii");
     //myfile.open("inputIdent.ascii");
     //myfile.open("TESTinputMatrix.ascii");
     loadMat(ipfile, test, SIZE);
@@ -35,7 +39,7 @@ int main()
     for(epsilon = 0.001; epsilon < 0.1; epsilon += 0.001)
     {
         cout << "Epsilon = " <<epsilon << endl; 
-        ssa = SimpleSSA(test, epsilon);    
+        ssa = SimpleSSA(test, epsilon, SIZE);    
         opfile << epsilon << "  " << ssa << endl; 
     }
     
