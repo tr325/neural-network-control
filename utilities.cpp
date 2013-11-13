@@ -21,9 +21,9 @@ double SimpleSSA(double *W[], double eps)
     double precision; 
     precision = 0.000001;
     
-    // Generate A = (W-sI) 
-    double *I[SIZE], *A[SIZE], *A_t[SIZE], *P[SIZE], *Q[SIZE];
-    double *fP, *fQ, *fA, *fA_t;
+    
+    double *I[SIZE], *A[SIZE], *P[SIZE], *Q[SIZE];
+    double *fP, *fQ, *fA;
     double spectralAbcissa, s;
     int loopcount;
     bool conv;
@@ -36,10 +36,9 @@ double SimpleSSA(double *W[], double eps)
     {
         I[i] = new double[SIZE];
         A[i] = new double[SIZE];
-        A_t[i] = new double[SIZE]; 
         P[i] = new double[SIZE];
         Q[i] = new double[SIZE];
-        I[i][i] = 1;                // The rest of the array default initialises to 0
+        I[i][i] = 1;     // The rest of the array default initialises to 0
     }
     
     
@@ -54,7 +53,8 @@ double SimpleSSA(double *W[], double eps)
         
     // main loop for N-R root finding method
     while(!conv)
-    {        
+    {    
+        // Generate A = (W-sI)     
         for(int i=0; i<SIZE; i++)
         {
             for(int j=0; j<SIZE; j++)
@@ -62,25 +62,21 @@ double SimpleSSA(double *W[], double eps)
                 A[i][j] = W[i][j] - s*I[i][j];
             }
         }
-
-             
         
-        // convert A and A_t to Schur form using dgees_ 
+        // convert A and A_t to Schur form using dgees_
         fA = FArrayConvert(A, SIZE);
         Schur(fA);
         CArrayConvert(fA, A, SIZE);
-    
-        
- 
+
         // Find SA value (max value of diagonals of Schur form) 
         // operates on first loop only
         if(loopcount == 0)
         {
             spectralAbcissa = MaxDiag(A, SIZE);
-            cout << setprecision(10) <<"Spectral abcissa value = " << spectralAbcissa <<endl; 
+            //cout << setprecision(10) <<"Spectral abcissa value = " << spectralAbcissa <<endl; 
             s = spectralAbcissa + 0.1;
-            cout << "Initial s =" << s << endl;
-            
+            //cout << "Initial s =" << s << endl;
+            /*
             ofstream opfile;
             opfile.open("TESTPrintA");
             for(int i=0; i<SIZE; i++)
@@ -91,15 +87,18 @@ double SimpleSSA(double *W[], double eps)
                 }
                 opfile <<endl;
             }
+            * */
         }           
         else
         {
             // Solve lyapunov equations for P and Q            
             fQ = Lyap(fA, true);
-            CArrayConvert(fQ, Q, SIZE); 
-            fP = Lyap(fA, false); 
-            CArrayConvert(fP, P, SIZE); 
-                        
+            CArrayConvert(fQ, Q, SIZE);
+            delete[] fQ;
+            fP = Lyap(fA, false);
+            CArrayConvert(fP, P, SIZE);
+            delete[] fP;
+             /*           
             if(loopcount ==3)
             {    
                 ofstream opfile;
@@ -134,16 +133,26 @@ double SimpleSSA(double *W[], double eps)
                     }
                     opfile3 <<endl;
                 }
-            }
             
+            }
+            */
             // use Newton-Raphson method to find new s value            
             conv = Newton(Q, P, eps, spectralAbcissa, precision, s);
         }
         
+        delete[] fA;
         loopcount++;
     }
     
-    cout << endl << "Smoothed spectral abcissa value = " << s << endl;
+    for(int i=0; i<SIZE; i++)
+    {
+        delete[] I[i];
+        delete[] A[i];
+        delete[] P[i];
+        delete[] Q[i];
+    }
+    
+    cout << "Smoothed spectral abcissa value = " << s << endl;
     cout << "Spectral abcissa value = " << spectralAbcissa << endl;
     cout << "Loop ran " << loopcount << " times" <<endl <<endl;
     return s;
@@ -156,7 +165,8 @@ bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double
     double val, grad, e;
     double *fP, *fQ, *fPQ;
     double *PQ[SIZE];
-
+    bool conv; 
+    
     for(int i=0; i<SIZE; i++)
     {
         PQ[i] = new double[SIZE];
@@ -169,6 +179,9 @@ bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double
     fPQ = FArrayConvert(PQ, SIZE);
     MatMult(fP, fQ, fPQ);
     CArrayConvert(fPQ, PQ, SIZE);
+    delete[] fP;
+    delete[] fPQ;
+    delete[] fQ;
 
     e = 1/eps;
     //cout << "e = " << e << ", and val = " << val <<endl; 
@@ -181,14 +194,21 @@ bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double
         {
             s = sA + 0.00001;
         }
-        cout << "gradient = " <<grad <<", s = " << s <<", val = " <<val << endl;
-        cout << "s jump " << (1/grad)*(e - val) << endl;
-        return false;
+        //cout << "gradient = " <<grad <<", s = " << s <<", val = " <<val << endl;
+        //cout << "s jump " << (1/grad)*(e - val) << endl;
+        conv = false;
     }
     else
     {
-        return true;
-    } 
+        conv = true;
+    }
+    
+    for(int i=0; i<SIZE; i++)
+    {
+        delete[] PQ[i];
+    }
+    
+    return conv; 
 }    
 
 /*  Performs matrix multiplication of matrices A and B,     
@@ -247,7 +267,7 @@ double MaxDiag(double *A[], int dimA)
 double* FArrayConvert(double *A[], int dimA)
 {
     double *fArray;
-    fArray = new double[dimA*dimA]; 
+    fArray = new double[dimA*dimA];
     for(int i=0; i<dimA; i++)
     {
         for(int j=0; j<dimA; j++)
@@ -290,6 +310,7 @@ void Schur(double A[])
         WORK[i] = new double[SIZE];
         BWORK[i] = new bool[SIZE];
     }
+    
     JOBVS = 'N';
     SORT = 'N';
     N = SIZE;
@@ -299,22 +320,6 @@ void Schur(double A[])
     
     dgees_(&JOBVS, &SORT, 0, &N, A, &LDA, &SDIM, *EIG_Re, *EIG_Im, *VS, &LDVS, *WORK, &LWORK, *BWORK, &INFO);
     
-    //cout << "dgees_ return status: " << INFO <<endl; 
-   /* 
-    int k, l;
-    for(k=0; k<SIZE; k++)
-    {
-        for(l=0; l<SIZE; l++)
-        {
-            cout << VS[k][l]; 
-        }
-        cout <<endl; 
-    }
-    cout << " k= " <<k << ", l = " << l <<endl; 
-   */ 
-    
-   // cout << "groob" << endl; 
-
     return;    
 }
 
@@ -389,6 +394,11 @@ double* Lyap(double A[], bool TRAN)
     for(int i=0; i<SIZE*SIZE; i++)
     {
         fC[i] = fC[i]/SCALE;
+    }
+    
+    for(int i=0; i<SIZE; i++)
+    {
+        delete[] C[i];
     }
     
     //cout << "dtrsyl return status: " <<INFO << endl; 
