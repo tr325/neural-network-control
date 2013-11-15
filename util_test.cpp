@@ -20,18 +20,18 @@ int main()
     ofstream opfile;
     
     double *test[SIZE];
+    double *P[SIZE];
+    double *Q[SIZE];
     for(int i=0; i<SIZE; i++)
     {
         test[i] = new double[SIZE];
+        P[i] = new double[SIZE];
+        Q[i] = new double[SIZE];
     }
    
-
     cout << "Epsilon = " << epsilon << endl;
     cout << "SIZE = " <<SIZE <<endl;
 
-
-    //myfile.open("inputIdent.ascii");
-    //myfile.open("TESTinputMatrix.ascii");
     loadMat(ipfile, test, SIZE);
     
     opfile.open("epsVsSSA.ascii", ios::trunc);
@@ -39,7 +39,7 @@ int main()
     for(epsilon = 0.001; epsilon < 0.1; epsilon += 0.001)
     {
         cout << "Epsilon = " <<epsilon << endl; 
-        ssa = SimpleSSA(test, epsilon, SIZE);    
+        ssa = SimpleSSA(test, P, Q, epsilon, SIZE);    
         opfile << epsilon << "  " << ssa << endl; 
     }
     

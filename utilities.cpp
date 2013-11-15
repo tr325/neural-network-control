@@ -17,12 +17,12 @@ extern "C" double dgemm_(char* trana, char* tranb, int* m, int* n, int* k, doubl
 
 /*  Takes inputs the required epsilon (larger->smoother SSA) and the input matrix A 
 *   Calculates the value of the SSA using the lyapunov eqn solver functions         */ 
-double SimpleSSA(double *W[], double eps, int SIZE)
+double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
 {
     double precision; 
     precision = 0.000001;
     
-    double *I[SIZE], *A[SIZE], *P[SIZE], *Q[SIZE];
+    double *I[SIZE], *A[SIZE];
     double *fP, *fQ, *fA;
     double spectralAbcissa, s;
     int loopcount;
@@ -36,8 +36,6 @@ double SimpleSSA(double *W[], double eps, int SIZE)
     {
         I[i] = new double[SIZE];
         A[i] = new double[SIZE];
-        P[i] = new double[SIZE];
-        Q[i] = new double[SIZE];
         I[i][i] = 1;     // The rest of the array default initialises to 0
     }
     
@@ -111,8 +109,6 @@ double SimpleSSA(double *W[], double eps, int SIZE)
     {
         delete[] I[i];
         delete[] A[i];
-        delete[] P[i];
-        delete[] Q[i];
     }
     
     cout << "Smoothed spectral abcissa value = " << s << endl;
@@ -120,7 +116,6 @@ double SimpleSSA(double *W[], double eps, int SIZE)
     cout << "Loop ran " << loopcount << " times" <<endl <<endl;
     return s;
 }
-
 
 /*  Finds the value of s for the next iteration of the loop     */
 bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double &s, int SIZE)
@@ -299,7 +294,6 @@ void loadMat(ifstream &file, double *A[], int SIZE)
 
         for(i=0; i<SIZE; i++)
         {
-            cout << i <<endl;
             for(j=0; j<SIZE; j++)
             {
                 if(file.eof())

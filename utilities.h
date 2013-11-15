@@ -35,7 +35,7 @@ double* Lyap(double A[], bool TRAN, int dimA);
 
 /* Returns the smoothed spectral abcissa for W, when given a specific  */ 
 /* epsilon to work towards                          */  
-double SimpleSSA(double *W[], double eps, int SIZE);
+double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE);
 
 
 /* Converts the input matrix to Schur form  */

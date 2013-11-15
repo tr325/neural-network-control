@@ -13,3 +13,12 @@ utilities.o: utilities.cpp utilities.h
 
 util_test: util_test.o utilities.o
 	g++ util_test.o utilities.o -lblas -llapack -o utest
+
+optimise.o: optimise.cpp optimise.h
+	g++ -lblas -llapack -c optimise.cpp
+
+opt_test.o: opt_test.cpp optimise.h
+	g++ -lblas -llapack -c opt_test.cpp
+
+opt_test: utilities.o optimise.o opt_test.o 
+	g++ opt_test.o optimise.o utilities.o -lblas -llapack -o optest
