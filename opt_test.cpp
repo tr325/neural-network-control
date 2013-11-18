@@ -1,6 +1,7 @@
 //  Test file for optimisation functions
 
 #include<iostream>
+#include<iomanip>
 #include<fstream>
 #include"optimise.h"
 #include"utilities.h"
@@ -18,6 +19,7 @@ int main()
     SIZE = MatSize(ipfile);
     eps = 0.01;
 
+    cout << setprecision(7); 
     double *W[SIZE];
     for(int i=0; i<SIZE; i++)
     {

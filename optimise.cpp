@@ -39,10 +39,13 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
     precision = 0.00001;
     loopcount = 0; 
     
+    ofstream resFile;
+    resFile.open("SsaOptimise.ascii");
+    
     // loops until the gradient descent algorithm has converged
     while(!conv)
     {
-        cout << "Optimisation loopcount = " <<loopcount << endl; 
+        //cout << "Optimisation loopcount = " <<loopcount << endl; 
         // solve SSA for current W matrix
         ssaOld = ssa;
         ssa = SimpleSSA(W, P, Q, eps, SIZE);
@@ -59,13 +62,37 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         delete[] fPQ;
         FormGradMat(gradMat, PQ, SIZE);
         
+        ofstream grFile;
+        grFile.open("TESTGradMat.ascii");
+        for(int i=0; i<SIZE; i++)
+        {
+            for(int j=0; j<SIZE; j++)
+            {
+                grFile << gradMat[i][j] << "  ";
+            }
+            grFile << endl; 
+        }                
+        
         // perform gradient descent to optimise W
         GradDescent(W, gradMat, SIZE);
 
+        ofstream opfile; 
+        opfile.open("optW.ascii");
+        for(int i=0; i<SIZE; i++)
+        {
+            for(int j=0; j<SIZE; j++)
+            {
+                opfile << W[i][j] << "  ";
+            }
+            opfile <<endl; 
+        }
+        
         if(abs(ssa - ssaOld) < precision)
         {
             conv = true;
         }
+        
+        resFile << ssa << endl; 
         
         loopcount++;
     }
@@ -104,10 +131,10 @@ void FormGradMat(double *gradMat[], double *PQ[], int SIZE)
 /*  Performs gradient descent on W, based on gradients in gradMat  */
 void GradDescent(double *W[], double *gradMat[], int SIZE)
 {
-    int descentRate;
+    double descentRate;
 
     // Determines how far down the gradient each iteration moves
-    descentRate = 1;
+    descentRate = 0.02;
 
     for(int i=(SIZE/2); i<SIZE; i++)
     {
@@ -115,7 +142,9 @@ void GradDescent(double *W[], double *gradMat[], int SIZE)
         {
             if(i != j)
             {
-                W[i][j] -= descentRate*gradMat[i][j];
+                //cout << "Wij updated from " <<W[i][j];
+                W[i][j] += descentRate*gradMat[i][j];
+                //cout << " to " <<W[i][j] <<endl;
             }
         }
     }

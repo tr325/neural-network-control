@@ -1,7 +1,6 @@
 /* File containing utility functions for Neural Network simulations   */
 
 #include<iostream>
-#include<iomanip>
 #include<fstream>
 #include<cmath>
 #include<cctype>
@@ -39,16 +38,21 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
         I[i][i] = 1;     // The rest of the array default initialises to 0
     }
     
-    
     for(int i=0; i<SIZE; i++)
     {
         for(int j=0; j<SIZE; j++)
         {
-            A[i][j] = W[i][j];
+            if(i == j)
+            {
+                I[i][j] = 1;
+            }
+            else
+            {
+                I[i][j] = 0;
+            }
         }
     }
     
-        
     // main loop for N-R root finding method
     while(!conv)
     {    
@@ -62,16 +66,53 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
         }
         
         // convert A and A_t to Schur form using dgees_
+        ofstream diagOut;
+        diagOut.open("Apassed.ascii");
+        for(int i=0; i<SIZE; i++)
+        {
+            for(int j=0; j<SIZE; j++)
+            {
+                diagOut <<A[i][j] << "  ";
+            }
+            diagOut << endl;
+        }
+        
+        ofstream diagOut2;
+        diagOut2.open("Wpassed.ascii");
+        for(int i=0; i<SIZE; i++)
+        {
+            for(int j=0; j<SIZE; j++)
+            {
+                diagOut2 <<W[i][j] << "  ";
+            }
+            diagOut2 << endl;
+        }
+        
+        ofstream diagOut3;
+        diagOut3.open("Ident.ascii");
+        for(int i=0; i<SIZE; i++)
+        {
+            for(int j=0; j<SIZE; j++)
+            {
+                diagOut3 <<I[i][j] << "  ";
+            }
+            diagOut3 << endl;
+        }
+        
+        
         fA = FArrayConvert(A, SIZE);
         Schur(fA, SIZE);
-        CArrayConvert(fA, A, SIZE);
-
+        CArrayConvert(fA, A, SIZE);       
+        
         // Find SA value (max value of diagonals of Schur form) 
         // operates on first loop only
         if(loopcount == 0)
         {
+            
             spectralAbcissa = MaxDiag(A, SIZE);
-            //cout << setprecision(10) <<"Spectral abcissa value = " << spectralAbcissa <<endl; 
+                    
+
+            //cout <<"Spectral abcissa value = " << spectralAbcissa <<endl; 
             s = spectralAbcissa + 0.1;
             //cout << "Initial s =" << s << endl;
             /*
@@ -111,9 +152,9 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
         delete[] A[i];
     }
     
-    cout << "Smoothed spectral abcissa value = " << s << endl;
-    cout << "Spectral abcissa value = " << spectralAbcissa << endl;
-    cout << "Loop ran " << loopcount << " times" <<endl <<endl;
+    //cout << "Smoothed spectral abcissa value = " << s << endl;
+    //cout << "Spectral abcissa value = " << spectralAbcissa << endl;
+    //cout << "Loop ran " << loopcount << " times" <<endl <<endl;
     return s;
 }
 
@@ -257,7 +298,10 @@ void Schur(double A[], int SIZE)
 {
     char JOBVS, SORT;
     int N, LDA, LDVS, LWORK, SDIM, INFO;  
-    double *EIG_Re[SIZE], *EIG_Im[SIZE], *VS[SIZE], *WORK[SIZE]; 
+    double *EIG_Re[SIZE]; 
+    double *EIG_Im[SIZE]; 
+    double *VS[SIZE];
+    double *WORK[SIZE]; 
     bool *BWORK[SIZE]; 
     
     for(int i=0; i<SIZE; i++)
@@ -272,11 +316,13 @@ void Schur(double A[], int SIZE)
     JOBVS = 'N';
     SORT = 'N';
     N = SIZE;
-    LDA = SIZE; 
+    LDA = SIZE;
     LDVS = SIZE;
     LWORK = 3*SIZE;
-    
+
+    //cout << "dgees_() called here..." <<endl;
     dgees_(&JOBVS, &SORT, 0, &N, A, &LDA, &SDIM, *EIG_Re, *EIG_Im, *VS, &LDVS, *WORK, &LWORK, *BWORK, &INFO);
+    //cout << " and returned" <<endl;
     
     return;    
 }

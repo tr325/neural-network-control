@@ -22,3 +22,9 @@ opt_test.o: opt_test.cpp optimise.h
 
 opt_test: utilities.o optimise.o opt_test.o 
 	g++ opt_test.o optimise.o utilities.o -lblas -llapack -o optest
+	
+gradMat_num_test.o: gradMat_num_test.cpp utilities.h
+	g++ -lblas -llapack -c gradMat_num_test.cpp
+	
+grad_test: gradMat_num_test.o utilities.o
+	g++ gradMat_num_test.o optimise.o utilities.o -lblas -llapack -o gradtest
