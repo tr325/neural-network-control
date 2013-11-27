@@ -16,10 +16,10 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
     double *P[SIZE];
     double *Q[SIZE];
     double *gradMat[SIZE];
-    double *PQ[SIZE];
+    double *QP[SIZE];
     double *fP;
     double *fQ;
-    double *fPQ;
+    double *fQP;
     bool conv;
     double ssa;
     double ssaOld;
@@ -31,7 +31,7 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         P[i] = new double[SIZE];
         Q[i] = new double[SIZE];
         gradMat[i] = new double[SIZE];
-        PQ[i] = new double[SIZE];
+        QP[i] = new double[SIZE];
     }
 
     conv = false;
@@ -51,16 +51,16 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         ssa = SimpleSSA(W, P, Q, eps, SIZE);
 
         // find the gradient matrix, d(SSA)/dW
-        fP = FArrayConvert(P, SIZE);
+       /* fP = FArrayConvert(P, SIZE);
         fQ = FArrayConvert(Q, SIZE);
-        fPQ = FArrayConvert(PQ, SIZE);
-        MatMult(fP, fQ, fPQ, SIZE);
-        
+        fQP = FArrayConvert(QP, SIZE);
+        MatMult(fQ, fP, fQP, SIZE);
+            
         delete[] fP;
         delete[] fQ;
-        CArrayConvert(fPQ, PQ, SIZE);
-        delete[] fPQ;
-        FormGradMat(gradMat, PQ, SIZE);
+        CArrayConvert(fQP, QP, SIZE);
+        delete[] fQP;*/
+        FormGradMat(gradMat, P, Q, W, QP, ssa, SIZE);
         
         ofstream grFile;
         grFile.open("TESTGradMat.ascii");
@@ -89,11 +89,13 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         
         if(abs(ssa - ssaOld) < precision)
         {
+            cout << "converged" <<endl;
             conv = true;
         }
         
         resFile << ssa << endl; 
         
+        cout << "SSA on loop " << loopcount << ": " <<ssa <<endl; 
         loopcount++;
     }
 
@@ -102,7 +104,7 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         delete[] P[i];
         delete[] Q[i];
         delete[] gradMat[i];
-        delete[] PQ[i];
+        delete[] QP[i];
     }
 
     return;
@@ -110,21 +112,64 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
 
 
 /*  Forms the gradient matrix           */
-void FormGradMat(double *gradMat[], double *PQ[], int SIZE)
+void FormGradMat(double *gradMat[], double *P[], double *Q[], double *A[], double *QP[], double ssa, int SIZE)
 {
-    double trace;
-
-    trace = Trace(PQ, SIZE);
+    //double *A[SIZE];
+   // double *I[SIZE];
+    double *fQ;
+    double *fP;
+    double *fQP;
+    double *fA;
+    double tr;
+ /*  
+    for(int i=0; i<SIZE; i++)
+    {
+        A[i] = new double[SIZE];
+        I[i] = new double[SIZE];
+    }
     
     for(int i=0; i<SIZE; i++)
     {
         for(int j=0; j<SIZE; j++)
         {
-            gradMat[i][j] = PQ[i][j]/trace;
+            if(i == j)
+            {
+                I[i][j] = 1;
+            }
+            else
+            {
+                I[i][j] = 0;
+            }
+            A[i][j] = W[i][j] - ssa*I[i][j];
         }
     }
+    */
+   // cout << "array exists here " << W[10][10] <<endl; 
+    
+    fA = FArrayConvert(A, SIZE);
+    fQ = Lyap(fA, true, SIZE);
+    CArrayConvert(fQ, Q, SIZE);
+    
+    fP = Lyap(fA, false, SIZE);
+    fQP = FArrayConvert(QP, SIZE);
+    MatMult(fQ, fP, fQP, SIZE);
+    CArrayConvert(fQP, QP, SIZE);
+    
+    tr = Trace(QP, SIZE);
+    cout << "trace(QP) = " <<tr <<endl;
+    
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            gradMat[i][j] = QP[i][j]/tr;
+        }
+    }
+    
+    cout <<"exit of FormGradMat()" <<endl; 
+   // cout << "does array exist here?" << W[10][10] <<endl; 
 
-    return;
+    //return;
 }
 
 
@@ -143,7 +188,7 @@ void GradDescent(double *W[], double *gradMat[], int SIZE)
             if(i != j)
             {
                 //cout << "Wij updated from " <<W[i][j];
-                W[i][j] += descentRate*gradMat[i][j];
+                W[i][j] += -descentRate*gradMat[i][j];
                 //cout << " to " <<W[i][j] <<endl;
             }
         }

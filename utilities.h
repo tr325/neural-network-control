@@ -1,3 +1,4 @@
+
 #include<fstream>
 
 using namespace std; 
@@ -47,4 +48,3 @@ double* FArrayConvert(double *A[], int dimA);
 /*  Repopulates array cA with the results of a Fortran  */
 /*  subroutine, held in array fA                        */
 void CArrayConvert(double fA[], double *cA[], int dimCA);
-

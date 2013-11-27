@@ -65,41 +65,7 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
             }
         }
         
-        // convert A and A_t to Schur form using dgees_
-        ofstream diagOut;
-        diagOut.open("Apassed.ascii");
-        for(int i=0; i<SIZE; i++)
-        {
-            for(int j=0; j<SIZE; j++)
-            {
-                diagOut <<A[i][j] << "  ";
-            }
-            diagOut << endl;
-        }
-        
-        ofstream diagOut2;
-        diagOut2.open("Wpassed.ascii");
-        for(int i=0; i<SIZE; i++)
-        {
-            for(int j=0; j<SIZE; j++)
-            {
-                diagOut2 <<W[i][j] << "  ";
-            }
-            diagOut2 << endl;
-        }
-        
-        ofstream diagOut3;
-        diagOut3.open("Ident.ascii");
-        for(int i=0; i<SIZE; i++)
-        {
-            for(int j=0; j<SIZE; j++)
-            {
-                diagOut3 <<I[i][j] << "  ";
-            }
-            diagOut3 << endl;
-        }
-        
-        
+        // convert A and A_t to Schur form using dgees_        
         fA = FArrayConvert(A, SIZE);
         Schur(fA, SIZE);
         CArrayConvert(fA, A, SIZE);       
@@ -108,25 +74,10 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
         // operates on first loop only
         if(loopcount == 0)
         {
-            
             spectralAbcissa = MaxDiag(A, SIZE);
-                    
-
             //cout <<"Spectral abcissa value = " << spectralAbcissa <<endl; 
             s = spectralAbcissa + 0.1;
             //cout << "Initial s =" << s << endl;
-            /*
-            ofstream opfile;
-            opfile.open("TESTPrintA");
-            for(int i=0; i<SIZE; i++)
-            {
-                for(int j=0; j<SIZE; j++)
-                {
-                    opfile << A[i][j] << " ";
-                }
-                opfile <<endl;
-            }
-            * */
         }           
         else
         {
