@@ -65,7 +65,7 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
             }
         }
         
-        // convert A and A_t to Schur form using dgees_        
+        // convert A to Schur form using dgees_        
         fA = FArrayConvert(A, SIZE);
         Schur(fA, SIZE);
         CArrayConvert(fA, A, SIZE);       
@@ -178,7 +178,7 @@ void MatMult(double A[], double B[], double C[], int SIZE)
     LDB = SIZE;
     LDC = SIZE;
     ALPHA = 1.00;
-    BETA = 0.00;
+    BETA = 0;
     
     dgemm_(&TRANA, &TRANB, &M, &N, &K, &ALPHA, A, &LDA, B, &LDB, &BETA, C, &LDC);
     

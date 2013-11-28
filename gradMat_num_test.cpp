@@ -81,42 +81,7 @@ int main()
     fQ = FArrayConvert(Q, SIZE);
     fQP = FArrayConvert(QP, SIZE);
     MatMult(fQ, fP, fQP, SIZE);
-    delete[] fP;
-    delete[] fQ;
-    CArrayConvert(fQP, QP, SIZE);
-    
-    ofstream opfile3;
-    opfile3.open("TESTQP.ascii");
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            opfile3 << QP[i][j] << "  ";
-        }
-        opfile3 <<endl;
-    }
-    ofstream opfile4;
-    opfile4.open("TESTP.ascii");
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            opfile4 << P[i][j] << "  ";
-        }
-        opfile4 <<endl;
-    }
-    ofstream opfile5;
-    opfile5.open("TESTQ.ascii");
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            opfile5 << Q[i][j] << "  ";
-        }
-        opfile5 <<endl;
-    }
-    
-    delete[] fQP;
+
     FormGradMat(gradMat, P, Q, A, QP, ssaFIXED, SIZE);
 
     ofstream opfile2;
@@ -158,7 +123,7 @@ int main()
     }
        
     cout << "true 1 = " << gradMat[15][7] <<endl;
-    cout << "estimated 1 = " << numGradMat[15][7] <<endl;
+    cout << "numerical 1 = " << numGradMat[15][7] <<endl;
     cout << "ratio 1 = " << gradMat[2][2]/numGradMat[2][2] <<endl;
     cout << "ratio 2 = " <<gradMat[15][7]/numGradMat[15][7] <<endl;
     cout << "difference 1 = " << gradMat[2][2]-numGradMat[2][2] <<endl;

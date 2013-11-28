@@ -14,7 +14,7 @@ utilities.o: utilities.cpp utilities.h
 util_test: util_test.o utilities.o
 	g++ util_test.o utilities.o -lblas -llapack -o utest
 
-optimise.o: optimise.cpp optimise.h
+optimise.o: optimise.cpp optimise.h utilities.h
 	g++ -lblas -llapack -c optimise.cpp
 
 opt_test.o: opt_test.cpp optimise.h
@@ -28,3 +28,9 @@ gradMat_num_test.o: gradMat_num_test.cpp utilities.h
 	
 grad_test: gradMat_num_test.o utilities.o optimise.o
 	g++ gradMat_num_test.o optimise.o utilities.o -lblas -llapack -o gradtest
+
+MatMult_test.o: MatMult_test.cpp utilities.h
+	g++ -lblas -llapack -c MatMult_test.cpp
+
+MatMult_test: MatMult_test.o utilities.o
+	g++ MatMult_test.o utilities.o -lblas -llapack -o mmtest

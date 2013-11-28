@@ -114,49 +114,27 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
 /*  Forms the gradient matrix           */
 void FormGradMat(double *gradMat[], double *P[], double *Q[], double *A[], double *QP[], double ssa, int SIZE)
 {
-    //double *A[SIZE];
-   // double *I[SIZE];
     double *fQ;
     double *fP;
     double *fQP;
     double *fA;
     double tr;
- /*  
-    for(int i=0; i<SIZE; i++)
-    {
-        A[i] = new double[SIZE];
-        I[i] = new double[SIZE];
-    }
-    
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            if(i == j)
-            {
-                I[i][j] = 1;
-            }
-            else
-            {
-                I[i][j] = 0;
-            }
-            A[i][j] = W[i][j] - ssa*I[i][j];
-        }
-    }
-    */
-   // cout << "array exists here " << W[10][10] <<endl; 
     
     fA = FArrayConvert(A, SIZE);
+    Schur(fA, SIZE);
+    CArrayConvert(fA, A, SIZE);   
     fQ = Lyap(fA, true, SIZE);
     CArrayConvert(fQ, Q, SIZE);
     
     fP = Lyap(fA, false, SIZE);
     fQP = FArrayConvert(QP, SIZE);
+    CArrayConvert(fP, P, SIZE);
+
     MatMult(fQ, fP, fQP, SIZE);
     CArrayConvert(fQP, QP, SIZE);
     
     tr = Trace(QP, SIZE);
-    cout << "trace(QP) = " <<tr <<endl;
+    //cout << "trace(QP) = " <<tr <<endl;
     
     for(int i=0; i<SIZE; i++)
     {
@@ -166,10 +144,42 @@ void FormGradMat(double *gradMat[], double *P[], double *Q[], double *A[], doubl
         }
     }
     
-    cout <<"exit of FormGradMat()" <<endl; 
-   // cout << "does array exist here?" << W[10][10] <<endl; 
+    ofstream opfile3;
+    opfile3.open("TESTQP.ascii");
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            opfile3 << QP[i][j] << "  ";
+        }
+        opfile3 <<endl;
+    }
+    
+    ofstream opfile4;
+    opfile4.open("TESTQ.ascii");
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            opfile4 << Q[i][j] << "  ";
+        }
+        opfile4 <<endl;
+    }
+    
+    ofstream opfile5;
+    opfile5.open("TESTP.ascii");
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            opfile5 << P[i][j] << "  ";
+        }
+        opfile5 <<endl;
+    }
+    
+    //cout <<"exit of FormGradMat()" <<endl; 
 
-    //return;
+    return;
 }
 
 
@@ -179,7 +189,7 @@ void GradDescent(double *W[], double *gradMat[], int SIZE)
     double descentRate;
 
     // Determines how far down the gradient each iteration moves
-    descentRate = 0.02;
+    descentRate = 0.1;
 
     for(int i=(SIZE/2); i<SIZE; i++)
     {
@@ -188,7 +198,7 @@ void GradDescent(double *W[], double *gradMat[], int SIZE)
             if(i != j)
             {
                 //cout << "Wij updated from " <<W[i][j];
-                W[i][j] += -descentRate*gradMat[i][j];
+                W[i][j] += descentRate*gradMat[i][j];
                 //cout << " to " <<W[i][j] <<endl;
             }
         }
@@ -196,15 +206,4 @@ void GradDescent(double *W[], double *gradMat[], int SIZE)
     
     return;
 }
-
-
-
-
-
-
-
-
-
-
-
 
