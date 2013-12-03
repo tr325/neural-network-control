@@ -30,6 +30,7 @@ int main()
     double *fP;
     double *fQ;
     double *fQP;
+    double *fW;
     double eps;
     double delta;
     double ssa;
@@ -65,7 +66,11 @@ int main()
     loadMat(ipfile, W, SIZE);
     delta = 0.00001; 
     eps = 0.001;
-    
+    /*
+    fW = FArrayConvert(W, SIZE);
+    Schur(fW, SIZE);
+    CArrayConvert(fW, W, SIZE);
+    */
     ssaFIXED = SimpleSSA(W, P, Q, eps, SIZE); 
     cout << "Original ssa value = " <<ssaFIXED <<endl;
     
@@ -76,16 +81,37 @@ int main()
             A[i][j] = W[i][j] - ssaFIXED*I[i][j];
         }
     }
-
-    fP = FArrayConvert(P, SIZE);
-    fQ = FArrayConvert(Q, SIZE);
-    fQP = FArrayConvert(QP, SIZE);
-    MatMult(fQ, fP, fQP, SIZE);
-
+    
+    ofstream opfile4; 
+    opfile4.open("TESTA.ascii");
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            opfile4 << A[i][j] <<"  ";
+        }
+        opfile4 <<endl;
+    }
+    opfile4.close();
+    
+    ofstream opfile3;
+    opfile3.open("TESTPssa.ascii");
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            opfile3 << P[i][j] <<"  ";
+        }
+        opfile3 <<endl;
+    }
+    opfile3.close();
+    
+    cout << "*******************************************" <<endl;
     FormGradMat(gradMat, P, Q, A, QP, ssaFIXED, SIZE);
 
     ofstream opfile2;
     opfile2.open("TESTGradMat.ascii");
+    opfile2.precision(10);
     for(int i=0; i<SIZE; i++)
     {
         for(int j=0; j<SIZE; j++)
@@ -94,10 +120,12 @@ int main()
         }
         opfile2 << endl;
     }
+    opfile2.close();
     
     cout << "Forming numerical gradMat..." << endl;
     //  Perturbs each element of W by a small amount delta, recalculates ssa
     //  Gradient is then (change in ssa)/delta
+    
     for(int i=0; i<SIZE; i++)
     {
         for(int j=0; j<SIZE; j++)
@@ -109,10 +137,10 @@ int main()
         }
         cout << "Completed line " << i <<endl; 
     }    
-    
-    ofstream opfile; 
+
+    ofstream opfile;
     opfile.open("TESTNumGradMat.ascii");
-    
+    opfile.precision(10);    
     for(int i=0; i<SIZE; i++)
     {
         for(int j=0; j<SIZE; j++)
@@ -121,13 +149,13 @@ int main()
         }
         opfile << endl; 
     }
+    opfile.close();
        
-    cout << "true 1 = " << gradMat[15][7] <<endl;
-    cout << "numerical 1 = " << numGradMat[15][7] <<endl;
-    cout << "ratio 1 = " << gradMat[2][2]/numGradMat[2][2] <<endl;
-    cout << "ratio 2 = " <<gradMat[15][7]/numGradMat[15][7] <<endl;
-    cout << "difference 1 = " << gradMat[2][2]-numGradMat[2][2] <<endl;
-    cout << "difference 2 = " <<gradMat[15][7]-numGradMat[15][7] <<endl;
+    cout << "true 1 = " << gradMat[0][0] <<endl;
+    cout << "numerical 1 = " << numGradMat[0][0] <<endl;
+    cout << "true 2 = " << gradMat[2][2] <<endl;
+    cout << "numerical 2 = " << numGradMat[2][2] <<endl;
+
     
     return 0;
 }

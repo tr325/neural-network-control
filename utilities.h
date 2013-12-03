@@ -38,7 +38,7 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE);
 
 
 /* Converts the input matrix to Schur form  */
-void Schur(double A[], int SIZE);
+void Schur(double A[], double VS[], int SIZE);
 
 
 /*  Converts input matrix to Column-major 1-D array for     */

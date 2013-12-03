@@ -14,6 +14,7 @@ int main()
     ifstream ipfile;
     int SIZE;
     double eps;
+    double *fW;
 
     ipfile.open("gradOpt.ascii");
     SIZE = MatSize(ipfile);
@@ -27,8 +28,26 @@ int main()
     }
 
     loadMat(ipfile, W, SIZE);
+    /*
+    fW = FArrayConvert(W, SIZE);
+    Schur(fW, SIZE);
+    CArrayConvert(fW, W, SIZE);
+    */
     OptimiseWMat(W, eps, SIZE);     
 
+
+    ofstream opfile;
+    opfile.precision(7);
+    opfile.open("editedW.ascii");
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            opfile << W[i][j] << "  ";
+        }
+        opfile <<endl;
+    }
+    
     for(int i=0; i<SIZE; i++)
     {
         delete[] W[i];

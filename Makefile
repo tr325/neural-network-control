@@ -34,3 +34,17 @@ MatMult_test.o: MatMult_test.cpp utilities.h
 
 MatMult_test: MatMult_test.o utilities.o
 	g++ MatMult_test.o utilities.o -lblas -llapack -o mmtest
+	
+tracetest.o: tracetest.cpp utilities.h
+	g++ -lblas -llapack -c tracetest.cpp
+	
+trace_test: trace_test.o utilities.o
+	g++ tracetest.o utilities.o -lblas -llapack -o ttest
+
+
+
+
+
+
+
+

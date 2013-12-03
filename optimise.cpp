@@ -13,6 +13,8 @@ using namespace std;
  *  to minimise the ssa value.  Optimisation is by gradient descent */
 void OptimiseWMat(double *W[], double eps, int SIZE)
 {
+    double *A[SIZE];
+    double *I[SIZE];
     double *P[SIZE];
     double *Q[SIZE];
     double *gradMat[SIZE];
@@ -24,20 +26,36 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
     double ssa;
     double ssaOld;
     double precision;
+    double descentRate;
     int loopcount;
 
     for(int i=0; i<SIZE; i++)
     {
+        A[i] = new double[SIZE];
+        I[i] = new double[SIZE];
         P[i] = new double[SIZE];
         Q[i] = new double[SIZE];
         gradMat[i] = new double[SIZE];
         QP[i] = new double[SIZE];
+        for(int j=0; j<SIZE; j++)
+        {
+            if(i==j)
+            {
+                I[i][j] = 1;
+            }
+            else
+            {
+                I[i][j] = 0;
+            }
+        }
     }
 
     conv = false;
     ssa = 0.0;
+    ssaOld = 10.0;  //initialised to greater than ssa for descentRate manipulation
     precision = 0.00001;
-    loopcount = 0; 
+    loopcount = 0;
+    descentRate = 0.5;
     
     ofstream resFile;
     resFile.open("SsaOptimise.ascii");
@@ -60,7 +78,20 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         delete[] fQ;
         CArrayConvert(fQP, QP, SIZE);
         delete[] fQP;*/
-        FormGradMat(gradMat, P, Q, W, QP, ssa, SIZE);
+        for(int i=0; i<SIZE; i++)
+        {
+            for(int j=0; j<SIZE; j++)
+            {
+                A[i][j] = W[i][j] - ssa*I[i][j];
+            }
+        }
+
+        fP = FArrayConvert(P, SIZE);
+        fQ = FArrayConvert(Q, SIZE);
+        fQP = FArrayConvert(QP, SIZE);
+        MatMult(fQ, fP, fQP, SIZE);
+        CArrayConvert(fQP, QP, SIZE);
+        FormGradMat(gradMat, P, Q, A, QP, ssa, SIZE);
         
         ofstream grFile;
         grFile.open("TESTGradMat.ascii");
@@ -89,10 +120,16 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         
         if(abs(ssa - ssaOld) < precision)
         {
-            cout << "converged" <<endl;
+            cout << "Converged" <<endl;
             conv = true;
         }
-        
+        /*
+        if(loopcount == 100)
+        {
+            cout <<"That's enough i think..." <<endl;
+            conv = true;
+        }
+        */
         resFile << ssa << endl; 
         
         cout << "SSA on loop " << loopcount << ": " <<ssa <<endl; 
@@ -114,22 +151,47 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
 /*  Forms the gradient matrix           */
 void FormGradMat(double *gradMat[], double *P[], double *Q[], double *A[], double *QP[], double ssa, int SIZE)
 {
+    double *V[SIZE];
+    double *Vt[SIZE];
+    double *G[SIZE];
+    double *foo[SIZE];
     double *fQ;
     double *fP;
     double *fQP;
     double *fA;
+    double *fV;
+    double *fVt;
+    double *fG;
+    double *fFoo;
+    double *fGrad;
     double tr;
     
-    fA = FArrayConvert(A, SIZE);
-    Schur(fA, SIZE);
-    CArrayConvert(fA, A, SIZE);   
-    fQ = Lyap(fA, true, SIZE);
-    CArrayConvert(fQ, Q, SIZE);
+    for(int i=0; i<SIZE; i++)
+    {
+        V[i] = new double[SIZE];
+        Vt[i] = new double[SIZE];
+        G[i] = new double[SIZE];
+        foo[i] = new double[SIZE];
+    }
     
-    fP = Lyap(fA, false, SIZE);
+    //  Calculate the matrix of schur vectors, V
+    fV = FArrayConvert(V, SIZE);
+    fA = FArrayConvert(A, SIZE);
+    Schur(fA, fV, SIZE);
+    CArrayConvert(fV, V, SIZE);
+    
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            Vt[i][j] = V[j][i];
+        }
+    }
+    fVt = FArrayConvert(Vt, SIZE);
+    
+    fQ = FArrayConvert(Q, SIZE);
+    fP = FArrayConvert(P, SIZE);
     fQP = FArrayConvert(QP, SIZE);
-    CArrayConvert(fP, P, SIZE);
-
     MatMult(fQ, fP, fQP, SIZE);
     CArrayConvert(fQP, QP, SIZE);
     
@@ -140,9 +202,28 @@ void FormGradMat(double *gradMat[], double *P[], double *Q[], double *A[], doubl
     {
         for(int j=0; j<SIZE; j++)
         {
-            gradMat[i][j] = QP[i][j]/tr;
+            G[i][j] = QP[i][j]/tr;
         }
     }
+    
+    //  normalise by multiplying by V and V'(pre- and post-)
+    fG = FArrayConvert(G, SIZE);
+    fFoo = FArrayConvert(foo, SIZE);
+    fGrad = FArrayConvert(gradMat, SIZE);
+    MatMult(fV, fG, fFoo, SIZE);
+    MatMult(fFoo, fVt, fGrad, SIZE);
+    CArrayConvert(fGrad, gradMat, SIZE);
+    
+    for(int i=0; i<SIZE; i++)
+    {
+        delete[] V[i];
+        delete[] G[i];
+        delete[] foo[i];
+    }
+    
+    /***********************************************************************************/
+    /***********************************************************************************/
+    
     
     ofstream opfile3;
     opfile3.open("TESTQP.ascii");
@@ -178,7 +259,7 @@ void FormGradMat(double *gradMat[], double *P[], double *Q[], double *A[], doubl
     }
     
     //cout <<"exit of FormGradMat()" <<endl; 
-
+    
     return;
 }
 
@@ -187,19 +268,24 @@ void FormGradMat(double *gradMat[], double *P[], double *Q[], double *A[], doubl
 void GradDescent(double *W[], double *gradMat[], int SIZE)
 {
     double descentRate;
+    double wOld;
 
     // Determines how far down the gradient each iteration moves
-    descentRate = 0.1;
+    descentRate = 10;
 
-    for(int i=(SIZE/2); i<SIZE; i++)
+    for(int i=0; i<SIZE; i++)
     {
-        for(int j=0; j<SIZE; j++)
+        for(int j=(SIZE/2); j<SIZE; j++)
         {
             if(i != j)
             {
-                //cout << "Wij updated from " <<W[i][j];
-                W[i][j] += descentRate*gradMat[i][j];
-                //cout << " to " <<W[i][j] <<endl;
+                wOld = W[i][j];
+                W[i][j] -= descentRate*gradMat[i][j];
+                if((i==80) && (j==76))
+                {
+                    //cout << "Wij updated from " <<wOld <<" to " <<W[i][j] <<endl;
+                    //cout << "with gradient = " <<gradMat[i][j] <<endl;
+                }
             }
         }
     }

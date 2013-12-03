@@ -21,8 +21,13 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
     double precision; 
     precision = 0.000001;
     
-    double *I[SIZE], *A[SIZE];
-    double *fP, *fQ, *fA;
+    double *I[SIZE];
+    double *A[SIZE];
+    double *V[SIZE];
+    double *fP;
+    double *fQ;
+    double *fA;
+    double *fV;
     double spectralAbcissa, s;
     int loopcount;
     bool conv;
@@ -35,7 +40,7 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
     {
         I[i] = new double[SIZE];
         A[i] = new double[SIZE];
-        I[i][i] = 1;     // The rest of the array default initialises to 0
+        V[i] = new double[SIZE];
     }
     
     for(int i=0; i<SIZE; i++)
@@ -53,6 +58,8 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
         }
     }
     
+    fV = FArrayConvert(V, SIZE);
+        
     // main loop for N-R root finding method
     while(!conv)
     {    
@@ -67,8 +74,9 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
         
         // convert A to Schur form using dgees_        
         fA = FArrayConvert(A, SIZE);
-        Schur(fA, SIZE);
-        CArrayConvert(fA, A, SIZE);       
+        Schur(fA, fV, SIZE);
+        CArrayConvert(fA, A, SIZE);
+        CArrayConvert(fV, V, SIZE);     
         
         // Find SA value (max value of diagonals of Schur form) 
         // operates on first loop only
@@ -96,6 +104,7 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
         delete[] fA;
         loopcount++;
     }
+    
     
     for(int i=0; i<SIZE; i++)
     {
@@ -162,7 +171,8 @@ bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double
 }    
 
 /*  Performs matrix multiplication of matrices A and B,     
- *  storing the result in C                                 */
+ *  storing the result in C. A, B **and C ** need to be 
+ *  passed thru FArrayConvert first                                 */
 void MatMult(double A[], double B[], double C[], int SIZE)
 {
     char TRANA, TRANB; 
@@ -245,13 +255,12 @@ void CArrayConvert(double fA[], double *cA[], int dimCA)
 /*  Converts input matrix A to Schur form (req for dtrsyl)  
  *  input matrix should be coverted for passing to Fortran by 
  *  FArrayConvert() before being passed to this funciton        */
-void Schur(double A[], int SIZE)
+void Schur(double A[], double VS[], int SIZE)
 {
     char JOBVS, SORT;
     int N, LDA, LDVS, LWORK, SDIM, INFO;  
     double *EIG_Re[SIZE]; 
     double *EIG_Im[SIZE]; 
-    double *VS[SIZE];
     double *WORK[SIZE]; 
     bool *BWORK[SIZE]; 
     
@@ -259,12 +268,11 @@ void Schur(double A[], int SIZE)
     {
         EIG_Re[i] = new double[SIZE];
         EIG_Im[i] = new double[SIZE];
-        VS[i] = new double[SIZE];
         WORK[i] = new double[SIZE];
         BWORK[i] = new bool[SIZE];
     }
     
-    JOBVS = 'N';
+    JOBVS = 'V';
     SORT = 'N';
     N = SIZE;
     LDA = SIZE;
@@ -272,7 +280,7 @@ void Schur(double A[], int SIZE)
     LWORK = 3*SIZE;
 
     //cout << "dgees_() called here..." <<endl;
-    dgees_(&JOBVS, &SORT, 0, &N, A, &LDA, &SDIM, *EIG_Re, *EIG_Im, *VS, &LDVS, *WORK, &LWORK, *BWORK, &INFO);
+    dgees_(&JOBVS, &SORT, 0, &N, A, &LDA, &SDIM, *EIG_Re, *EIG_Im, VS, &LDVS, *WORK, &LWORK, *BWORK, &INFO);
     //cout << " and returned" <<endl;
     
     return;    
@@ -365,7 +373,17 @@ double* Lyap(double A[], bool TRAN, int SIZE)
     for(int i=0; i<SIZE; i++)
     {
         C[i] = new double[SIZE];
-        C[i][i] = -1.00;
+        for(int j=0; j<SIZE; j++)
+        {
+            if(i==j)
+            {
+                C[i][j] = -1;
+            }
+            else
+            {
+                C[i][j] = 0;
+            }
+        }
     }
 
     fC = FArrayConvert(C, SIZE);
