@@ -107,7 +107,7 @@ int main()
     opfile3.close();
     
     cout << "*******************************************" <<endl;
-    FormGradMat(gradMat, P, Q, A, QP, ssaFIXED, SIZE);
+    FormGradMat(gradMat, A, QP, ssaFIXED, SIZE);
 
     ofstream opfile2;
     opfile2.open("TESTGradMat.ascii");

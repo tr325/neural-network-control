@@ -12,7 +12,7 @@ int MatSize(ifstream &file);
 
 /*  Performs matrix multiplication of matrices A and B,     
  *  storing the result in C                                 */
-void MatMult(double A[], double B[], double C[], int SIZE);
+void MatMult(double *A[], double *B[], double *C[], int SIZE);
 
 
 /*  Finds the value of the smoothed spectral abcissa using  */
@@ -27,9 +27,9 @@ double Trace(double *A[], int dimA);
 double MaxDiag(double *A[], int dimA);
 
 
-/* Solves lyapunov eqn for 0 = L(P,A,U,s)   */ 
-/* Returns pointer to P                     */
-double* Lyap(double A[], bool TRAN, int dimA);
+/* Solves lyapunov eqn for 0 = L(X,A,U,s)   */ 
+/* Populates matrix X                       */
+void Lyap(double *A[], double *X[], bool TRAN, int dimA);
 
 
 /* Returns the smoothed spectral abcissa for W, when given a specific  */ 
@@ -38,7 +38,7 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE);
 
 
 /* Converts the input matrix to Schur form  */
-void Schur(double A[], double VS[], int SIZE);
+void Schur(double *A[], double *VS[], int SIZE);
 
 
 /*  Converts input matrix to Column-major 1-D array for     */

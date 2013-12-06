@@ -24,10 +24,6 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
     double *I[SIZE];
     double *A[SIZE];
     double *V[SIZE];
-    double *fP;
-    double *fQ;
-    double *fA;
-    double *fV;
     double spectralAbcissa, s;
     int loopcount;
     bool conv;
@@ -57,9 +53,7 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
             }
         }
     }
-    
-    fV = FArrayConvert(V, SIZE);
-        
+            
     // main loop for N-R root finding method
     while(!conv)
     {    
@@ -73,10 +67,7 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
         }
         
         // convert A to Schur form using dgees_        
-        fA = FArrayConvert(A, SIZE);
-        Schur(fA, fV, SIZE);
-        CArrayConvert(fA, A, SIZE);
-        CArrayConvert(fV, V, SIZE);     
+        Schur(A, V, SIZE);    
         
         // Find SA value (max value of diagonals of Schur form) 
         // operates on first loop only
@@ -89,19 +80,14 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
         }           
         else
         {
-            // Solve lyapunov equations for P and Q            
-            fQ = Lyap(fA, true, SIZE);
-            CArrayConvert(fQ, Q, SIZE);
-            delete[] fQ;
-            fP = Lyap(fA, false, SIZE);
-            CArrayConvert(fP, P, SIZE);
-            delete[] fP;
-            
+            // Solve lyapunov equations for P and Q
+            Lyap(A, Q, true, SIZE);
+            Lyap(A, P, false, SIZE);
+
             // use Newton-Raphson method to find new s value            
             conv = Newton(Q, P, eps, spectralAbcissa, precision, s, SIZE);
         }
         
-        delete[] fA;
         loopcount++;
     }
     
@@ -133,14 +119,7 @@ bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double
     
     val = Trace(Q, SIZE);
     
-    fP = FArrayConvert(P, SIZE);
-    fQ = FArrayConvert(Q, SIZE);
-    fPQ = FArrayConvert(PQ, SIZE);
-    MatMult(fP, fQ, fPQ, SIZE);
-    CArrayConvert(fPQ, PQ, SIZE);
-    delete[] fP;
-    delete[] fPQ;
-    delete[] fQ;
+    MatMult(P, Q, PQ, SIZE);
 
     e = 1/eps;
     //cout << "e = " << e << ", and val = " << val <<endl; 
@@ -171,13 +150,26 @@ bool Newton(double *Q[], double *P[], double eps, double sA, double prec, double
 }    
 
 /*  Performs matrix multiplication of matrices A and B,     
- *  storing the result in C. A, B **and C ** need to be 
- *  passed thru FArrayConvert first                                 */
-void MatMult(double A[], double B[], double C[], int SIZE)
+ *  storing the result in C.                             */
+void MatMult(double *A[], double *B[], double *C[], int SIZE)
 {
-    char TRANA, TRANB; 
-    int M, N, K, LDA, LDB, LDC; 
-    double ALPHA, BETA; 
+    char TRANA;
+    char TRANB;
+    int M;
+    int N;
+    int K;
+    int LDA;
+    int LDB;
+    int LDC;
+    double ALPHA;
+    double BETA;
+    double *fA;
+    double *fB;
+    double *fC;
+    
+    fA = FArrayConvert(A, SIZE);
+    fB = FArrayConvert(B, SIZE);
+    fC = FArrayConvert(C, SIZE);    
     
     TRANA = 'N';
     TRANB = 'N';
@@ -190,7 +182,15 @@ void MatMult(double A[], double B[], double C[], int SIZE)
     ALPHA = 1.00;
     BETA = 0;
     
-    dgemm_(&TRANA, &TRANB, &M, &N, &K, &ALPHA, A, &LDA, B, &LDB, &BETA, C, &LDC);
+    dgemm_(&TRANA, &TRANB, &M, &N, &K, &ALPHA, fA, &LDA, fB, &LDB, &BETA, fC, &LDC);
+    
+    CArrayConvert(fA, A, SIZE);
+    CArrayConvert(fB, B, SIZE);
+    CArrayConvert(fC, C, SIZE);
+    
+    delete[] fA;
+    delete[] fB;
+    delete[] fC;
     
     return;
 }
@@ -255,14 +255,22 @@ void CArrayConvert(double fA[], double *cA[], int dimCA)
 /*  Converts input matrix A to Schur form (req for dtrsyl)  
  *  input matrix should be coverted for passing to Fortran by 
  *  FArrayConvert() before being passed to this funciton        */
-void Schur(double A[], double VS[], int SIZE)
+void Schur(double *A[], double *VS[], int SIZE)
 {
-    char JOBVS, SORT;
-    int N, LDA, LDVS, LWORK, SDIM, INFO;  
-    double *EIG_Re[SIZE]; 
-    double *EIG_Im[SIZE]; 
-    double *WORK[SIZE]; 
-    bool *BWORK[SIZE]; 
+    char JOBVS;
+    char SORT;
+    int N;
+    int LDA;
+    int LDVS;
+    int LWORK;
+    int SDIM;
+    int INFO;
+    double *EIG_Re[SIZE];
+    double *EIG_Im[SIZE];
+    double *WORK[SIZE];
+    bool *BWORK[SIZE];
+    double *fA; 
+    double *fVS;
     
     for(int i=0; i<SIZE; i++)
     {
@@ -272,6 +280,9 @@ void Schur(double A[], double VS[], int SIZE)
         BWORK[i] = new bool[SIZE];
     }
     
+    fA = FArrayConvert(A, SIZE);
+    fVS = FArrayConvert(VS, SIZE);
+    
     JOBVS = 'V';
     SORT = 'N';
     N = SIZE;
@@ -280,8 +291,14 @@ void Schur(double A[], double VS[], int SIZE)
     LWORK = 3*SIZE;
 
     //cout << "dgees_() called here..." <<endl;
-    dgees_(&JOBVS, &SORT, 0, &N, A, &LDA, &SDIM, *EIG_Re, *EIG_Im, VS, &LDVS, *WORK, &LWORK, *BWORK, &INFO);
+    dgees_(&JOBVS, &SORT, 0, &N, fA, &LDA, &SDIM, *EIG_Re, *EIG_Im, fVS, &LDVS, *WORK, &LWORK, *BWORK, &INFO);
     //cout << " and returned" <<endl;
+    
+    CArrayConvert(fA, A, SIZE);
+    CArrayConvert(fVS, VS, SIZE);
+    
+    delete[] fA;
+    delete[] fVS;
     
     return;    
 }
@@ -340,14 +357,42 @@ int MatSize(ifstream &file)
 
 
 
-/* Solves lyapunov eqn for 0 = L(P,A,U,s)       */ 
+/* Solves lyapunov eqn for 0 = L(X,A,U,s)       */ 
 /* Returns pointer to P                         */
-/* Solves: (W-sI)P + P(W-sI)^T = -I             */
-/* Form:  A*P + P*B = C                         */
-double* Lyap(double A[], bool TRAN, int SIZE)
+/* Solves: (W-sI)X + X(W-sI)^T = -I             */
+/* Form:  A*X + X*B = C                         */
+void Lyap(double *A[], double *X[], bool TRAN, int SIZE)
 {
-    char TRANA, TRANB;
-    int ISGN, ORDA, ORDB, LDA, LDB, LDC, INFO;
+    char TRANA;
+    char TRANB;
+    int ISGN;
+    int ORDA;
+    int ORDB;
+    int LDA;
+    int LDB;
+    int LDC;
+    int INFO;
+    double *fA;
+    double *fX;
+    
+    
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            if(i==j)
+            {
+                X[i][j] = -1;
+            }
+            else
+            {
+                X[i][j] = 0;
+            }
+        }
+    }
+
+    fX = FArrayConvert(X, SIZE);
+    fA = FArrayConvert(A, SIZE);
     
     if(TRAN)
     {
@@ -362,47 +407,24 @@ double* Lyap(double A[], bool TRAN, int SIZE)
     ISGN = 1;
 
     ORDA = SIZE;
-    //ORDB = SIZE;
     LDA = SIZE;
-    //LDB = SIZE;
     LDC = SIZE;
-    
-    double *C[SIZE];
-    double *fC;
-    
-    for(int i=0; i<SIZE; i++)
-    {
-        C[i] = new double[SIZE];
-        for(int j=0; j<SIZE; j++)
-        {
-            if(i==j)
-            {
-                C[i][j] = -1;
-            }
-            else
-            {
-                C[i][j] = 0;
-            }
-        }
-    }
-
-    fC = FArrayConvert(C, SIZE);
 
     double SCALE = 1.00;
     
-    dtrsyl_(&TRANA, &TRANB, &ISGN, &ORDA, &ORDA, A, &LDA, A, &LDA, fC, &LDC, &SCALE, &INFO);  
+    dtrsyl_(&TRANA, &TRANB, &ISGN, &ORDA, &ORDA, fA, &LDA, fA, &LDA, fX, &LDC, &SCALE, &INFO);  
     
     for(int i=0; i<SIZE*SIZE; i++)
     {
-        fC[i] = fC[i]/SCALE;
+        fX[i] = fX[i]/SCALE;
     }
     
-    for(int i=0; i<SIZE; i++)
-    {
-        delete[] C[i];
-    }
+    CArrayConvert(fX, X, SIZE);
+    CArrayConvert(fA, A, SIZE);
     
+    delete[] fX;
+    delete[] fA;
     //cout << "dtrsyl return status: " <<INFO << endl; 
     
-    return fC;
+    return;
 }
