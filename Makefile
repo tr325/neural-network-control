@@ -41,10 +41,20 @@ tracetest.o: tracetest.cpp utilities.h
 trace_test: trace_test.o utilities.o
 	g++ tracetest.o utilities.o -lblas -llapack -o ttest
 
+dale_test.o: dale_test.cpp utilities.h optimise.h
+	g++ -lblas -llapack -c dale_test.cpp
+	
+dale_test: dale_test.o utilities.o optimise.o
+	g++ dale_test.o utilities.o optimise.o -lblas -llapack -o dtest
 
+repar_test.o: repar_test.cpp utilities.h optimise.h
+	g++ -lblas -llapack -c repar_test.cpp
 
-
-
-
+repar_test: repar_test.o utilities.o optimise.o
+	g++ repar_test.o utilities.o optimise.o -lblas -llapack -o reptest
+	
+	
+	
+	
 
 

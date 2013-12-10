@@ -5,7 +5,7 @@ using namespace std;
 
 
 /* Populates a 2D array with the data held in an ascii file */ 
-void loadMat(ifstream &file, double* A[], int matDim);
+void LoadMat(ifstream &file, double* A[], int matDim);
 
 /* Returns dimension of input matrix from the file  */
 int MatSize(ifstream &file);
@@ -48,3 +48,9 @@ double* FArrayConvert(double *A[], int dimA);
 /*  Repopulates array cA with the results of a Fortran  */
 /*  subroutine, held in array fA                        */
 void CArrayConvert(double fA[], double *cA[], int dimCA);
+
+
+/*  Outputs matrix M to file filename for viewing       */
+/*  Overloaded for matrices of doubles and ints         */
+void OutputMat(char* filename, double *M[], int SIZE);
+void OutputMat(char* filename, int *M[], int SIZE);

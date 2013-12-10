@@ -194,7 +194,46 @@ void MatMult(double *A[], double *B[], double *C[], int SIZE)
     
     return;
 }
+
+/*  Outputs a matrix of doubles to a file for reading        */
+void OutputMat(char* filename, double *M[], int SIZE)
+{
+    ofstream opfile;
+    opfile.open(filename);
     
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            opfile << M[i][j] << "  ";
+        }
+        opfile <<endl;
+    }
+    
+    opfile.close();
+    
+    return;
+}
+
+/*  Outputs a matrix of ints to a file for reading        */
+void OutputMat(char* filename, int *M[], int SIZE)
+{
+    ofstream opfile;
+    opfile.open(filename);
+    
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            opfile << M[i][j] << "  ";
+        }
+        opfile <<endl;
+    }
+    
+    opfile.close();
+    
+    return;
+}
     
 /*  Calculates the trace of a matrix                    */
 double Trace(double *A[], int dimA)
@@ -304,7 +343,7 @@ void Schur(double *A[], double *VS[], int SIZE)
 }
 
 /* Populates a 2D array with the data held in an ascii file */ 
-void loadMat(ifstream &file, double *A[], int SIZE)
+void LoadMat(ifstream &file, double *A[], int SIZE)
 {
     int j=0; 
     int i=0;

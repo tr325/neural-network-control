@@ -13,23 +13,22 @@ using namespace std;
  *  to minimise the ssa value.  Optimisation is by gradient descent */
 void OptimiseWMat(double *W[], double eps, int SIZE)
 {
-    double *A[SIZE];
-    double *I[SIZE];
-    double *P[SIZE];
-    double *Q[SIZE];
-    double *gradMat[SIZE];
-    double *QP[SIZE];
-    double *fP;
-    double *fQ;
-    double *fQP;
-    double *fA;
-    bool conv;
-    double sa;
-    double ssa;
-    double ssaOld;
-    double precision;
-    double descentRate;
-    int loopcount;
+    double  *A[SIZE];
+    double  *I[SIZE];
+    double  *P[SIZE];
+    double  *Q[SIZE];
+    double  *V[SIZE];
+    double  *gradMat[SIZE];
+    double  *QP[SIZE];
+    int     *B[SIZE];
+    bool    conv;
+    double  sa;
+    double  ssa;
+    double  ssaOld;
+    double  precision;
+    double  descentRate;
+    int     inhibNum;
+    int     loopcount;
 
     for(int i=0; i<SIZE; i++)
     {
@@ -37,8 +36,10 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         I[i] = new double[SIZE];
         P[i] = new double[SIZE];
         Q[i] = new double[SIZE];
+        V[i] = new double[SIZE];
         gradMat[i] = new double[SIZE];
         QP[i] = new double[SIZE];
+        B[i] = new int[SIZE];
         for(int j=0; j<SIZE; j++)
         {
             if(i==j)
@@ -58,6 +59,9 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
     precision = 0.00001;
     loopcount = 0;
     descentRate = 10;   // determines how far down slope each iteration updates
+    inhibNum = 10;      // number of inhibitory columns of W 
+    EnforceDale(W, B, inhibNum, SIZE);
+    Reparam(W, B, V, SIZE);
     
     ofstream resFile;
     resFile.open("SsaOptimise.ascii");
@@ -82,8 +86,10 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         MatMult(Q, P, QP, SIZE);
         FormGradMat(gradMat, A, QP, ssa, SIZE);
         
-        // perform gradient descent to optimise W
-        GradDescent(W, gradMat, descentRate, SIZE);
+        // perform gradient descent to optimise V, then recalculate W
+        GradDescent(V, gradMat, descentRate, inhibNum, SIZE);
+        RecalcW(W, B, V, SIZE);
+        
         
         if(abs(ssa - ssaOld) < precision)
         {
@@ -113,17 +119,16 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         delete[] QP[i];
         delete[] A[i];
         delete[] I[i];
+        delete[] V[i];
+        delete[] B[i];
     }
-    delete[] fP;
-    delete[] fQ;
-    delete[] fQP;
-    delete[] fA;
 
     return;
 }
 
 
-/*  Forms the gradient matrix           */
+/*  Forms the gradient matrix. 
+ *  CURRENTLY optimising over V - so gradMat = d(ssa)/dV        */
 void FormGradMat(double *gradMat[], double *A[], double *QP[], double ssa, int SIZE)
 {
     double *V[SIZE];
@@ -142,7 +147,6 @@ void FormGradMat(double *gradMat[], double *A[], double *QP[], double ssa, int S
     
     //  Calculate the matrix of schur vectors, V
     Schur(A, V, SIZE);
-    
     for(int i=0; i<SIZE; i++)
     {
         for(int j=0; j<SIZE; j++)
@@ -150,7 +154,6 @@ void FormGradMat(double *gradMat[], double *A[], double *QP[], double ssa, int S
             Vt[i][j] = V[j][i];
         }
     }
-    
     tr = Trace(QP, SIZE);    
     for(int i=0; i<SIZE; i++)
     {
@@ -160,9 +163,22 @@ void FormGradMat(double *gradMat[], double *A[], double *QP[], double ssa, int S
         }
     }
     
-    //  normalise by multiplying by V and V'(pre- and post-)
+    //  Normalise by multiplying by V and V'(pre- and post-)
     MatMult(V, G, foo, SIZE);
     MatMult(foo, Vt, gradMat, SIZE);
+    
+    //  Adjust by chain rule, such that GradMat contains gradients wrt V, not W
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            //  carries out gradient descent, not necessarily SD
+            // gradMat[i][j] *= B[i][j];
+            //  Carries out steepest gradient descent
+            gradMat[i][j] *= A[i][j];       // NB: ok to use A atm, as not using changing diagonals in GradDescent()
+            
+        }
+    }
     
     for(int i=0; i<SIZE; i++)
     {
@@ -171,63 +187,25 @@ void FormGradMat(double *gradMat[], double *A[], double *QP[], double ssa, int S
         delete[] foo[i];
     }
     
-
-    /***********************************************************************************/
-    /***********************************************************************************/
-    
-    /*
-    ofstream opfile3;
-    opfile3.open("TESTQP.ascii");
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            opfile3 << QP[i][j] << "  ";
-        }
-        opfile3 <<endl;
-    }
-    opfile3.close();
-    
-    ofstream opfile4;
-    opfile4.open("TESTQ.ascii");
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            opfile4 << Q[i][j] << "  ";
-        }
-        opfile4 <<endl;
-    }
-    opfile4.close();
-    
-    ofstream opfile5;
-    opfile5.open("TESTP.ascii");
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            opfile5 << P[i][j] << "  ";
-        }
-        opfile5 <<endl;
-    }
-    opfile5.close()
-    */
     //cout <<"exit of FormGradMat()" <<endl; 
     
     return;
 }
 
 
-/*  Performs gradient descent on W, based on gradients in gradMat  */
-void GradDescent(double *W[], double *gradMat[], double descentRate, int SIZE)
+/*  Performs gradient descent on V, based on gradients in gradMat  */
+void GradDescent(double *V[], double *gradMat[], double descentRate, int inhibNum, int SIZE)
 {
+    int exNum; 
+    exNum = SIZE - inhibNum; 
+    
     for(int i=0; i<SIZE; i++)
     {
-        for(int j=(SIZE/2); j<SIZE; j++)
+        for(int j=(exNum); j<SIZE; j++)
         {
             if(i != j)
             {
-                W[i][j] -= descentRate*gradMat[i][j];
+                V[i][j] -= descentRate*gradMat[i][j];
             }
         }
     }
@@ -235,3 +213,83 @@ void GradDescent(double *W[], double *gradMat[], double descentRate, int SIZE)
     return;
 }
 
+
+/*  Recalculates the W matrix after gradient descent manipulation of V  */
+void RecalcW(double *W[], int *B[], double *V[], int SIZE)
+{
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            W[i][j] = B[i][j]*exp(V[i][j]);
+        }
+    }
+    return;    
+}
+
+
+/*  From an input W matrix, finds the corresponding V matrix. 
+ *  w_ij = b_ij*exp(v_ij)   ->    v_ij = ln(w_ij/b_ij)  if bij != 0 */ 
+void Reparam(double *W[], int *B[], double *V[], int SIZE)
+{
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            if(B[i][j] != 0)
+            {
+                V[i][j] = log(W[i][j]/B[i][j]);
+            }
+            else
+            {
+                cout << "i = " <<i << ", j = " <<j <<endl;
+                V[i][j] = 0;
+            }
+        }
+    }
+}
+
+
+/*  Checks that the input matrix obeys Dale's Law and populates B matrix  
+ *  NB: Should only be called once (at start).  The reparameterisation 
+ *  should take care of keeping it enforced during the optimization.   */
+void EnforceDale(double *W[], int *B[], int inhibNum, int SIZE)
+{
+    double exNum;
+    exNum = SIZE - inhibNum;
+    
+    // Sort out the excitatory columns
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<exNum; j++)
+        {
+            if(W[i][j] < 0)
+            {
+                W[i][j] = 0; 
+                B[i][j] = 0;
+            }
+            else
+            {
+                B[i][j] = +1;
+            }
+        }
+    }
+    // Sort out inhibitory columns
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=exNum; j<SIZE; j++)
+        {
+            if(W[i][j] > 0)
+            {
+                W[i][j] = 0;
+                B[i][j] = 0;
+            }
+            else
+            {
+                B[i][j] = -1;
+            }
+        }
+    }
+        
+    return;
+}
