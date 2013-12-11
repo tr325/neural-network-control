@@ -28,3 +28,7 @@ void Reparam(double *W[], int *B[], double *V[], int SIZE);
 
 /*  Recalculates the W matrix after gradient descent manipulation of V  */
 void RecalcW(double *W[], int *B[], double *V[], int SIZE);
+
+
+/*  Forms new synapses if some decay to zero        */
+void ReformSyn(double *V[], int *B[], int inhibNum, int SIZE);

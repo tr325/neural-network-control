@@ -3,6 +3,7 @@
 
 #include<iostream>
 #include<cmath>
+#include<cstdlib>
 #include"optimise.h"
 #include"utilities.h"
 
@@ -58,7 +59,7 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
     ssaOld = 10.0;  //initialised to greater than ssa for descentRate manipulation
     precision = 0.0000001;
     loopcount = 0;
-    descentRate = 1;   // determines how far down slope each iteration updates
+    descentRate = 0.5;   // determines how far down slope each iteration updates
     inhibNum = 10;      // number of inhibitory columns of W 
     EnforceDale(W, B, inhibNum, SIZE);
     Reparam(W, B, V, SIZE);
@@ -88,6 +89,7 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         
         // perform gradient descent to optimise V, then recalculate W
         GradDescent(V, gradMat, descentRate, inhibNum, SIZE);
+        ReformSyn(V, B, inhibNum, SIZE);
         RecalcW(W, B, V, SIZE);
         
         
@@ -104,9 +106,11 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         }
         */
         //break;
-        resFile << ssa <<endl; 
+        resFile << ssa <<endl;
         
-        cout << "SSA on loop " << loopcount << ": " <<ssa <<endl; 
+        //OutputMat("exampleV.ascii", V, SIZE);
+        
+        //cout << "SSA on loop " << loopcount << ": " <<ssa <<endl; 
         loopcount++;
     }
     resFile.close();
@@ -124,6 +128,41 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
     }
 
     return;
+}
+
+
+/*  Forms new synapses if some decay to zero        */
+void ReformSyn(double *V[], int *B[], int inhibNum, int SIZE)
+{
+    double initVal;
+    double decayVal;
+    int exNum;
+    int newCol;
+    
+    exNum = SIZE - inhibNum;
+    initVal = -3;
+    decayVal = -7;
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=exNum; j<SIZE; j++)
+        {
+            if(V[i][j] < decayVal)
+            {
+                cout << "Decayed synapse: " <<i+1 <<", " <<j+1 <<"; strength = "<<V[i][j] <<endl;
+                V[i][j] = 0;
+                B[i][j] = 0;
+                newCol = (rand() % inhibNum) + exNum;
+                while((B[i][newCol] != 0) && (newCol != i))
+                {
+                        newCol = (rand() % inhibNum) + exNum;
+                }
+                cout << "Formed synapse: " <<i+1 <<", " <<newCol+1 <<"; value updated from " <<V[i][newCol] <<" to ";
+                B[i][newCol] = -1;
+                V[i][newCol] = initVal;
+                cout <<V[i][newCol] <<endl;
+            }
+        }
+    }    
 }
 
 
@@ -168,7 +207,6 @@ void FormGradMat(double *gradMat[], double *W[], double *A[], double *QP[], doub
     MatMult(foo, Vt, gradMat, SIZE);
     
     //  Adjust by chain rule, such that GradMat contains gradients wrt V, not W
-    //OutputMat("WgradMat.ascii", gradMat, SIZE);
     for(int i=0; i<SIZE; i++)
     {
         for(int j=0; j<SIZE; j++)
@@ -177,8 +215,7 @@ void FormGradMat(double *gradMat[], double *W[], double *A[], double *QP[], doub
             gradMat[i][j] *= W[i][j];
         }
     }
-    //OutputMat("VgradMat.ascii", gradMat, SIZE);
-    //OutputMat("WMat.ascii", W, SIZE);
+
     
     for(int i=0; i<SIZE; i++)
     {
@@ -199,7 +236,6 @@ void GradDescent(double *V[], double *gradMat[], double descentRate, int inhibNu
     int exNum; 
     exNum = SIZE - inhibNum; 
     
-    OutputMat("V.ascii", V, SIZE);
     for(int i=0; i<SIZE; i++)
     {
         for(int j=(exNum); j<SIZE; j++)
@@ -210,7 +246,6 @@ void GradDescent(double *V[], double *gradMat[], double descentRate, int inhibNu
             }
         }
     }
-    OutputMat("Vnew.ascii", V, SIZE);
     return;
 }
 
@@ -292,6 +327,12 @@ void EnforceDale(double *W[], int *B[], int inhibNum, int SIZE)
             }
         }
     }
+    // Force diagonal elements to 0
+    for(int i=0; i<SIZE; i++)
+    {
+        W[i][i] = 0;
+        B[i][i] = 0;
+    }    
         
     return;
 }
