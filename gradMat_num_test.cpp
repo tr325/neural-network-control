@@ -14,7 +14,7 @@ int main()
     int SIZE;
     
 
-    ipfile.open("TESTinputMatrix.ascii");
+    ipfile.open("repTestInput.ascii");
     SIZE = MatSize(ipfile);
     
     cout << "SIZE = " <<SIZE <<endl;
@@ -27,10 +27,7 @@ int main()
     double *gradMat[SIZE];
     double *numGradMat[SIZE];
     double *QP[SIZE];
-    double *fP;
-    double *fQ;
-    double *fQP;
-    double *fW;
+    int *B[SIZE];
     double eps;
     double delta;
     double ssa;
@@ -44,6 +41,7 @@ int main()
         P[i] = new double[SIZE];
         Q[i] = new double[SIZE];
         QP[i] = new double[SIZE];
+        B[i] = new int[SIZE];
         gradMat[i] = new double[SIZE];
         numGradMat[i] = new double[SIZE];
     }
@@ -63,14 +61,11 @@ int main()
         }
     }
     
-    loadMat(ipfile, W, SIZE);
+    LoadMat(ipfile, W, SIZE);
     delta = 0.00001; 
     eps = 0.001;
-    /*
-    fW = FArrayConvert(W, SIZE);
-    Schur(fW, SIZE);
-    CArrayConvert(fW, W, SIZE);
-    */
+    
+    EnforceDale(W, B, 10, SIZE);
     ssaFIXED = SimpleSSA(W, P, Q, eps, SIZE); 
     cout << "Original ssa value = " <<ssaFIXED <<endl;
     
@@ -82,50 +77,16 @@ int main()
         }
     }
     
-    ofstream opfile4; 
-    opfile4.open("TESTA.ascii");
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            opfile4 << A[i][j] <<"  ";
-        }
-        opfile4 <<endl;
-    }
-    opfile4.close();
-    
-    ofstream opfile3;
-    opfile3.open("TESTPssa.ascii");
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            opfile3 << P[i][j] <<"  ";
-        }
-        opfile3 <<endl;
-    }
-    opfile3.close();
-    
+    MatMult(Q, P, QP, SIZE);
     cout << "*******************************************" <<endl;
-    FormGradMat(gradMat, A, QP, ssaFIXED, SIZE);
+    FormGradMat(gradMat, W, A, QP, ssaFIXED, SIZE);
 
-    ofstream opfile2;
-    opfile2.open("TESTGradMat.ascii");
-    opfile2.precision(10);
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            opfile2 << gradMat[i][j] << "  ";
-        }
-        opfile2 << endl;
-    }
-    opfile2.close();
     
-    cout << "Forming numerical gradMat..." << endl;
+    //cout << "Forming numerical gradMat..." << endl;
     //  Perturbs each element of W by a small amount delta, recalculates ssa
     //  Gradient is then (change in ssa)/delta
     
+    /*
     for(int i=0; i<SIZE; i++)
     {
         for(int j=0; j<SIZE; j++)
@@ -137,25 +98,13 @@ int main()
         }
         cout << "Completed line " << i <<endl; 
     }    
-
-    ofstream opfile;
-    opfile.open("TESTNumGradMat.ascii");
-    opfile.precision(10);    
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            opfile << numGradMat[i][j] << "  ";
-        }
-        opfile << endl; 
-    }
-    opfile.close();
-       
+    */
+    /*   
     cout << "true 1 = " << gradMat[0][0] <<endl;
     cout << "numerical 1 = " << numGradMat[0][0] <<endl;
     cout << "true 2 = " << gradMat[2][2] <<endl;
     cout << "numerical 2 = " << numGradMat[2][2] <<endl;
-
+    */
     
     return 0;
 }

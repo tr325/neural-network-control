@@ -8,7 +8,7 @@ void OptimiseWMat(double *W[], double eps, int SIZE);
 
 
 /*  Forms the gradient matrix, d(SSA)/dW                */
-void FormGradMat(double *gradMat[], double *W[], double *QP[], double ssa, int SIZE);
+void FormGradMat(double *gradMat[], double *A[], double *W[], double *QP[], double ssa, int SIZE);
 
 
 /*  Performs gradient descent on second SIZE/2 columns

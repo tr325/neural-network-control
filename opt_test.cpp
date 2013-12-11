@@ -15,7 +15,7 @@ int main()
     int SIZE;
     double eps;
 
-    ipfile.open("gradOpt.ascii");
+    ipfile.open("repTestInput.ascii");
     SIZE = MatSize(ipfile);
     eps = 0.01;
 
@@ -28,7 +28,7 @@ int main()
 
     LoadMat(ipfile, W, SIZE);
 
-    OptimiseWMat(W, eps, SIZE);     
+    OptimiseWMat(W, eps, SIZE);
     
     for(int i=0; i<SIZE; i++)
     {

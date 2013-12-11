@@ -56,9 +56,9 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
     conv = false;
     ssa = 0.0;
     ssaOld = 10.0;  //initialised to greater than ssa for descentRate manipulation
-    precision = 0.00001;
+    precision = 0.0000001;
     loopcount = 0;
-    descentRate = 10;   // determines how far down slope each iteration updates
+    descentRate = 1;   // determines how far down slope each iteration updates
     inhibNum = 10;      // number of inhibitory columns of W 
     EnforceDale(W, B, inhibNum, SIZE);
     Reparam(W, B, V, SIZE);
@@ -84,7 +84,7 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         
         // find the gradient matrix, d(SSA)/dW;
         MatMult(Q, P, QP, SIZE);
-        FormGradMat(gradMat, A, QP, ssa, SIZE);
+        FormGradMat(gradMat, A, W, QP, ssa, SIZE);
         
         // perform gradient descent to optimise V, then recalculate W
         GradDescent(V, gradMat, descentRate, inhibNum, SIZE);
@@ -103,7 +103,7 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
             conv = true;
         }
         */
-        
+        //break;
         resFile << ssa <<endl; 
         
         cout << "SSA on loop " << loopcount << ": " <<ssa <<endl; 
@@ -129,7 +129,7 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
 
 /*  Forms the gradient matrix. 
  *  CURRENTLY optimising over V - so gradMat = d(ssa)/dV        */
-void FormGradMat(double *gradMat[], double *A[], double *QP[], double ssa, int SIZE)
+void FormGradMat(double *gradMat[], double *W[], double *A[], double *QP[], double ssa, int SIZE)
 {
     double *V[SIZE];
     double *Vt[SIZE];
@@ -168,17 +168,17 @@ void FormGradMat(double *gradMat[], double *A[], double *QP[], double ssa, int S
     MatMult(foo, Vt, gradMat, SIZE);
     
     //  Adjust by chain rule, such that GradMat contains gradients wrt V, not W
+    //OutputMat("WgradMat.ascii", gradMat, SIZE);
     for(int i=0; i<SIZE; i++)
     {
         for(int j=0; j<SIZE; j++)
         {
-            //  carries out gradient descent, not necessarily SD
-            // gradMat[i][j] *= B[i][j];
-            //  Carries out steepest gradient descent
-            gradMat[i][j] *= A[i][j];       // NB: ok to use A atm, as not using changing diagonals in GradDescent()
-            
+            // Forms gradmat for steepest gradient descent
+            gradMat[i][j] *= W[i][j];
         }
     }
+    //OutputMat("VgradMat.ascii", gradMat, SIZE);
+    //OutputMat("WMat.ascii", W, SIZE);
     
     for(int i=0; i<SIZE; i++)
     {
@@ -199,6 +199,7 @@ void GradDescent(double *V[], double *gradMat[], double descentRate, int inhibNu
     int exNum; 
     exNum = SIZE - inhibNum; 
     
+    OutputMat("V.ascii", V, SIZE);
     for(int i=0; i<SIZE; i++)
     {
         for(int j=(exNum); j<SIZE; j++)
@@ -209,7 +210,7 @@ void GradDescent(double *V[], double *gradMat[], double descentRate, int inhibNu
             }
         }
     }
-    
+    OutputMat("Vnew.ascii", V, SIZE);
     return;
 }
 
@@ -242,11 +243,12 @@ void Reparam(double *W[], int *B[], double *V[], int SIZE)
             }
             else
             {
-                cout << "i = " <<i << ", j = " <<j <<endl;
+                //cout << "i = " <<i << ", j = " <<j <<endl;
                 V[i][j] = 0;
             }
         }
     }
+    return;
 }
 
 

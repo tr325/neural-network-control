@@ -12,7 +12,7 @@ int main()
 {
     int SIZE;
     ifstream ipfile; 
-    ipfile.open("daleTest.ascii");
+    ipfile.open("repTestInput.ascii");
     SIZE = MatSize(ipfile);
     
     double  *W[SIZE];
