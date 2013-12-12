@@ -1,9 +1,6 @@
                                                                      
                                                                      
                                                                      
-                                             
-test:
-	g++ test.cpp -lblas -llapack -o test
 
 util_test.o: util_test.cpp utilities.h
 	g++ -lblas -llapack -c util_test.cpp
@@ -59,6 +56,13 @@ reform_Syn_test.o: reform_Syn_test.cpp utilities.h optimise.h
 refsyn_test: reform_Syn_test.o utilities.o optimise.o
 	g++ reform_Syn_test.o utilities.o optimise.o -lblas -llapack -o refsyntest	
 	
+generateW.o: generateW.cpp generateW.h
+	g++ -c generateW.cpp
 	
+gen_test.o: gen_test.cpp utilities.h generateW.h
+	g++ -c gen_test.cpp
+	
+gen_test: generateW.o utilities.o
+	g++ gen_test.o generateW.o utilities.o -lblas -llapack -o gentest
 
 
