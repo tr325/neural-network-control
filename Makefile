@@ -65,4 +65,13 @@ gen_test.o: gen_test.cpp utilities.h generateW.h
 gen_test: generateW.o utilities.o
 	g++ gen_test.o generateW.o utilities.o -lblas -llapack -o gentest
 
-
+stab_test.o: stab_test.cpp utilities.h generateW.h optimise.h
+	g++ -c stab_test.cpp
+	
+stab_test: stab_test.o utilities.o optimise.o generateW.o
+	g++ stab_test.o generateW.o utilities.o optimise.o -lblas -llapack -o stabtest
+	
+	
+	
+	
+	

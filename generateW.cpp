@@ -84,7 +84,7 @@ void EnforceDale(double *W[], int *B[], int inhibNum, int SIZE)
     {
         for(int j=0; j<exNum; j++)
         {
-            if(W[i][j] < 0)
+            if(W[i][j] <= 0)
             {
                 W[i][j] = 0; 
                 B[i][j] = 0;
@@ -100,7 +100,7 @@ void EnforceDale(double *W[], int *B[], int inhibNum, int SIZE)
     {
         for(int j=exNum; j<SIZE; j++)
         {
-            if(W[i][j] > 0)
+            if(W[i][j] >= 0)
             {
                 W[i][j] = 0;
                 B[i][j] = 0;

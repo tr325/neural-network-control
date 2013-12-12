@@ -12,7 +12,7 @@ using namespace std;
 
 /*  Takes the input weighting matrix, and optimises the second half
  *  to minimise the ssa value.  Optimisation is by gradient descent */
-void OptimiseWMat(double *W[], double eps, int SIZE)
+void OptimiseWMat(double *W[], int *B[], double eps, int SIZE)
 {
     double  *A[SIZE];
     double  *I[SIZE];
@@ -21,7 +21,6 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
     double  *V[SIZE];
     double  *gradMat[SIZE];
     double  *QP[SIZE];
-    int     *B[SIZE];
     bool    conv;
     double  sa;
     double  ssa;
@@ -40,7 +39,6 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         V[i] = new double[SIZE];
         gradMat[i] = new double[SIZE];
         QP[i] = new double[SIZE];
-        B[i] = new int[SIZE];
         for(int j=0; j<SIZE; j++)
         {
             if(i==j)
@@ -61,9 +59,9 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
     loopcount = 0;
     descentRate = 0.5;   // determines how far down slope each iteration updates
     inhibNum = 10;      // number of inhibitory columns of W 
-    EnforceDale(W, B, inhibNum, SIZE);
     Reparam(W, B, V, SIZE);
-    
+    OutputMat("reparamW.ascii", W, SIZE);
+    OutputMat("reparamV.ascii", V, SIZE);
     ofstream resFile;
     resFile.open("SsaOptimise.ascii");
     
@@ -110,7 +108,7 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         
         //OutputMat("exampleV.ascii", V, SIZE);
         
-        //cout << "SSA on loop " << loopcount << ": " <<ssa <<endl; 
+        cout << "SSA on loop " << loopcount << ": " <<ssa <<endl; 
         loopcount++;
     }
     resFile.close();
@@ -124,7 +122,6 @@ void OptimiseWMat(double *W[], double eps, int SIZE)
         delete[] A[i];
         delete[] I[i];
         delete[] V[i];
-        delete[] B[i];
     }
 
     return;
@@ -274,6 +271,7 @@ void Reparam(double *W[], int *B[], double *V[], int SIZE)
         {
             if(B[i][j] != 0)
             {
+                //cout<<"nonzero Bij at "<<i<<"  " <<j<<endl;
                 V[i][j] = log(W[i][j]/B[i][j]);
             }
             else
