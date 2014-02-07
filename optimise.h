@@ -1,14 +1,16 @@
 //  Header file for optimisation functions defined in optimise.cpp
 
+#ifndef OPTIMISE_H
+#define OPTIMISE_H
 
 /*  Takes a weight matrix as an input, and optimises
  *  the final SIZE/2 columns to minimise the SSA using
  *  gradient descent techniques.                        */
-void OptimiseWMat(double *W[], int *B[], double eps, int SIZE);
+void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, int SIZE);
 
 
 /*  Forms the gradient matrix, d(SSA)/dW                */
-void FormGradMat(double *gradMat[], double *A[], double *W[], double *QP[], double ssa, int SIZE);
+void FormGradMat(double *gradMat[], double *W[], double *QP[], double *S_Vect[], double *S_Vect_T[], double ssa, int SIZE);
 
 
 /*  Performs gradient descent on second SIZE/2 columns
@@ -27,3 +29,6 @@ void RecalcW(double *W[], int *B[], double *V[], int SIZE);
 
 /*  Forms new synapses if some decay to zero        */
 void ReformSyn(double *V[], int *B[], int inhibNum, int SIZE);
+
+
+#endif

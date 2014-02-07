@@ -5,6 +5,7 @@
 #include<fstream>
 #include"optimise.h"
 #include"utilities.h"
+#include"generateW.h"
 
 using namespace std;
 

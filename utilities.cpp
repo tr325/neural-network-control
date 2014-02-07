@@ -16,14 +16,13 @@ extern "C" double dgemm_(char* trana, char* tranb, int* m, int* n, int* k, doubl
 
 /*  Takes inputs the required epsilon (larger->smoother SSA) and the input matrix A 
 *   Calculates the value of the SSA using the lyapunov eqn solver functions         */ 
-double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
+double SimpleSSA(double *W[], double *P[], double *Q[], double *V[], double eps, int SIZE)
 {
     double precision; 
     precision = 0.000001;
     
     double *I[SIZE];
     double *A[SIZE];
-    double *V[SIZE];
     double spectralAbcissa, s;
     int loopcount;
     bool conv;
@@ -36,7 +35,6 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
     {
         I[i] = new double[SIZE];
         A[i] = new double[SIZE];
-        V[i] = new double[SIZE];
     }
     
     for(int i=0; i<SIZE; i++)
@@ -57,6 +55,8 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
     // main loop for N-R root finding method
     while(!conv)
     {    
+        
+        //cout << "N_R loop " <<loopcount << endl;
         // Generate A = (W-sI)     
         for(int i=0; i<SIZE; i++)
         {
@@ -73,8 +73,8 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE)
         // operates on first loop only
         if(loopcount == 0)
         {
-            spectralAbcissa = MaxDiag(A, SIZE);
-            //cout <<"Spectral abcissa value = " << spectralAbcissa <<endl; 
+            spectralAbcissa = MaxDiag(A, SIZE);            
+            //cout << spectralAbcissa <<endl;
             s = spectralAbcissa + 0.1;
             //cout << "Initial s =" << s << endl;
         }           

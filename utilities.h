@@ -1,3 +1,6 @@
+#ifndef UTILITIES_H
+#define UTILITIES_H
+
 
 #include<fstream>
 
@@ -34,7 +37,7 @@ void Lyap(double *A[], double *X[], bool TRAN, int dimA);
 
 /* Returns the smoothed spectral abcissa for W, when given a specific  */ 
 /* epsilon to work towards                          */  
-double SimpleSSA(double *W[], double *P[], double *Q[], double eps, int SIZE);
+double SimpleSSA(double *W[], double *P[], double *Q[], double *V[], double eps, int SIZE);
 
 
 /* Converts the input matrix to Schur form  */
@@ -54,3 +57,7 @@ void CArrayConvert(double fA[], double *cA[], int dimCA);
 /*  Overloaded for matrices of doubles and ints         */
 void OutputMat(char* filename, double *M[], int SIZE);
 void OutputMat(char* filename, int *M[], int SIZE);
+
+
+#endif
+

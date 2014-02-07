@@ -12,22 +12,24 @@ using namespace std;
 
 /*  Takes the input weighting matrix, and optimises the second half
  *  to minimise the ssa value.  Optimisation is by gradient descent */
-void OptimiseWMat(double *W[], int *B[], double eps, int SIZE)
+void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, int SIZE)
 {
     double  *A[SIZE];
     double  *I[SIZE];
     double  *P[SIZE];
     double  *Q[SIZE];
     double  *V[SIZE];
+    double  *S_Vect[SIZE];
+    double  *S_Vect_T[SIZE];
     double  *gradMat[SIZE];
     double  *QP[SIZE];
     bool    conv;
-    double  sa;
+    double  *sa;
     double  ssa;
     double  ssaOld;
     double  precision;
     double  descentRate;
-    int     inhibNum;
+    double  avgStrengh;
     int     loopcount;
 
     for(int i=0; i<SIZE; i++)
@@ -37,6 +39,8 @@ void OptimiseWMat(double *W[], int *B[], double eps, int SIZE)
         P[i] = new double[SIZE];
         Q[i] = new double[SIZE];
         V[i] = new double[SIZE];
+        S_Vect[i] = new double[SIZE];
+        S_Vect_T[i] = new double[SIZE];
         gradMat[i] = new double[SIZE];
         QP[i] = new double[SIZE];
         for(int j=0; j<SIZE; j++)
@@ -57,13 +61,12 @@ void OptimiseWMat(double *W[], int *B[], double eps, int SIZE)
     ssaOld = 10.0;  //initialised to greater than ssa for descentRate manipulation
     precision = 0.0000001;
     loopcount = 0;
-    descentRate = 0.5;   // determines how far down slope each iteration updates
-    inhibNum = 10;      // number of inhibitory columns of W 
+    descentRate = 5;   // determines how far down slope each iteration updates
     Reparam(W, B, V, SIZE);
     OutputMat("reparamW.ascii", W, SIZE);
-    OutputMat("reparamV.ascii", V, SIZE);
     ofstream resFile;
     resFile.open("SsaOptimise.ascii");
+    
     
     // loops until the gradient descent algorithm has converged
     while(!conv)
@@ -71,19 +74,20 @@ void OptimiseWMat(double *W[], int *B[], double eps, int SIZE)
         //cout << "Optimisation loopcount = " <<loopcount << endl; 
         // solve SSA for current W matrix
         ssaOld = ssa;
-        ssa = SimpleSSA(W, P, Q, eps, SIZE);
-
+        ssa = SimpleSSA(W, P, Q, S_Vect, eps, SIZE);
+        
         for(int i=0; i<SIZE; i++)
         {
             for(int j=0; j<SIZE; j++)
             {
                 A[i][j] = W[i][j] - ssa*I[i][j];
+                S_Vect_T[i][j] = S_Vect[j][i];
             }
         }
         
         // find the gradient matrix, d(SSA)/dW;
         MatMult(Q, P, QP, SIZE);
-        FormGradMat(gradMat, A, W, QP, ssa, SIZE);
+        FormGradMat(gradMat, W, QP, S_Vect, S_Vect_T, ssa, SIZE);
         
         // perform gradient descent to optimise V, then recalculate W
         GradDescent(V, gradMat, descentRate, inhibNum, SIZE);
@@ -103,16 +107,30 @@ void OptimiseWMat(double *W[], int *B[], double eps, int SIZE)
             conv = true;
         }
         */
-        //break;
+        if(ssa < 1.00)
+        {
+            cout << "Stabilised" << endl;
+            conv = true;
+        }
+        if(ssa > 100)
+        {
+            cout <<"Unstable behaviour" <<endl;
+            OutputMat("divergentW.ascii", W, SIZE);
+            OutputMat("divergentB.ascii", B, SIZE);
+            OutputMat("divergentV.ascii", V, SIZE);
+            exit(0);
+        }
+        
         resFile << ssa <<endl;
-        
-        //OutputMat("exampleV.ascii", V, SIZE);
-        
-        cout << "SSA on loop " << loopcount << ": " <<ssa <<endl; 
+                
+        //cout <<endl <<endl;
+        cout <<"SSA on loop " << loopcount << ": " <<ssa <<endl; 
         loopcount++;
     }
     resFile.close();
 
+    OutputMat("reparStabW.ascii", W, SIZE);
+    
     for(int i=0; i<SIZE; i++)
     {
         delete[] P[i];
@@ -122,6 +140,7 @@ void OptimiseWMat(double *W[], int *B[], double eps, int SIZE)
         delete[] A[i];
         delete[] I[i];
         delete[] V[i];
+        delete[] S_Vect_T[i];
     }
 
     return;
@@ -135,10 +154,16 @@ void ReformSyn(double *V[], int *B[], int inhibNum, int SIZE)
     double decayVal;
     int exNum;
     int newCol;
+    bool test; 
     
     exNum = SIZE - inhibNum;
-    initVal = -3;
-    decayVal = -7;
+    initVal = -5;
+    decayVal = -5;
+    
+    OutputMat("refStabTestV1.ascii", V, SIZE);
+    OutputMat("refStabTestB1.ascii", B, SIZE);
+    
+    //cout << "reforming..." <<endl;
     for(int i=0; i<SIZE; i++)
     {
         for(int j=exNum; j<SIZE; j++)
@@ -146,50 +171,59 @@ void ReformSyn(double *V[], int *B[], int inhibNum, int SIZE)
             if(V[i][j] < decayVal)
             {
                 cout << "Decayed synapse: " <<i+1 <<", " <<j+1 <<"; strength = "<<V[i][j] <<endl;
-                V[i][j] = 0;
-                B[i][j] = 0;
                 newCol = (rand() % inhibNum) + exNum;
-                while((B[i][newCol] != 0) && (newCol != i))
+                while((B[i][newCol] != 0) || (newCol == i))
                 {
-                        newCol = (rand() % inhibNum) + exNum;
+                    newCol = (rand() % inhibNum) + exNum;
                 }
                 cout << "Formed synapse: " <<i+1 <<", " <<newCol+1 <<"; value updated from " <<V[i][newCol] <<" to ";
                 B[i][newCol] = -1;
                 V[i][newCol] = initVal;
                 cout <<V[i][newCol] <<endl;
+                V[i][j] = 0;
+                B[i][j] = 0;
+                
+                test = true;
             }
         }
-    }    
+    } 
+    
+    
+    if(test)
+    {
+        OutputMat("refStabTestV2.ascii", V, SIZE);
+        OutputMat("refStabTestB2.ascii", B, SIZE);
+    }
+    
+    return;
 }
 
 
 /*  Forms the gradient matrix. 
  *  CURRENTLY optimising over V - so gradMat = d(ssa)/dV        */
-void FormGradMat(double *gradMat[], double *W[], double *A[], double *QP[], double ssa, int SIZE)
+void FormGradMat(double *gradMat[], double *W[], double *QP[], double *S_Vect[], double *S_Vect_T[], double ssa, int SIZE)
 {
-    double *V[SIZE];
-    double *Vt[SIZE];
     double *G[SIZE];
     double *foo[SIZE];
     double tr;
     
     for(int i=0; i<SIZE; i++)
     {
-        V[i] = new double[SIZE];
-        Vt[i] = new double[SIZE];
         G[i] = new double[SIZE];
         foo[i] = new double[SIZE];
     }
     
+    //cout << "Forming gradmat..." << endl;
+    
     //  Calculate the matrix of schur vectors, V
-    Schur(A, V, SIZE);
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            Vt[i][j] = V[j][i];
-        }
-    }
+    //~ Schur(A, V, SIZE);
+    //~ for(int i=0; i<SIZE; i++)
+    //~ {
+        //~ for(int j=0; j<SIZE; j++)
+        //~ {
+            //~ Vt[i][j] = V[j][i];
+        //~ }
+    //~ }
     tr = Trace(QP, SIZE);    
     for(int i=0; i<SIZE; i++)
     {
@@ -199,9 +233,9 @@ void FormGradMat(double *gradMat[], double *W[], double *A[], double *QP[], doub
         }
     }
     
-    //  Normalise by multiplying by V and V'(pre- and post-)
-    MatMult(V, G, foo, SIZE);
-    MatMult(foo, Vt, gradMat, SIZE);
+    //  Normalise by multiplying by Vector matrix and its transpose(pre- and post-)
+    MatMult(S_Vect, G, foo, SIZE);
+    MatMult(foo, S_Vect_T, gradMat, SIZE);
     
     //  Adjust by chain rule, such that GradMat contains gradients wrt V, not W
     for(int i=0; i<SIZE; i++)
@@ -213,10 +247,8 @@ void FormGradMat(double *gradMat[], double *W[], double *A[], double *QP[], doub
         }
     }
 
-    
     for(int i=0; i<SIZE; i++)
     {
-        delete[] V[i];
         delete[] G[i];
         delete[] foo[i];
     }
@@ -257,6 +289,7 @@ void RecalcW(double *W[], int *B[], double *V[], int SIZE)
             W[i][j] = B[i][j]*exp(V[i][j]);
         }
     }
+    
     return;    
 }
 

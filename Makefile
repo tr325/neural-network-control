@@ -50,11 +50,11 @@ repar_test.o: repar_test.cpp utilities.h optimise.h
 repar_test: repar_test.o utilities.o optimise.o
 	g++ repar_test.o utilities.o optimise.o -lblas -llapack -o reptest
 	
-reform_Syn_test.o: reform_Syn_test.cpp utilities.h optimise.h
+reform_Syn_test.o: reform_Syn_test.cpp utilities.h optimise.h generateW.h
 	g++ -lblas -llapack -c reform_Syn_test.cpp
 
-refsyn_test: reform_Syn_test.o utilities.o optimise.o
-	g++ reform_Syn_test.o utilities.o optimise.o -lblas -llapack -o refsyntest	
+refsyn_test: reform_Syn_test.o utilities.o optimise.o generateW.o
+	g++ reform_Syn_test.o utilities.o optimise.o generateW.o -lblas -llapack -o refsyntest	
 	
 generateW.o: generateW.cpp generateW.h
 	g++ -c generateW.cpp

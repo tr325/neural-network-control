@@ -7,19 +7,16 @@
 
 using namespace std;
 
-void GenerateWMat(double *W[], int *B[], int SIZE)
+void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE)
 {
     double inhibSparce;
     double exSparce;
     double inhibConst;
     double exConst; 
-    int inhibCols;
     int exCols;
     double gamma;
     double randx;
     
-    cout << "How many inhibitory columns?" <<endl;
-    cin >> inhibCols;
     while(inhibCols > SIZE)
     {
         cout << "Inhibitory columns must be less than SIZE, try again:" <<endl;
@@ -29,8 +26,9 @@ void GenerateWMat(double *W[], int *B[], int SIZE)
     inhibSparce = 0.4;
     exSparce = 0.1;
     gamma = 3.00;   // From Biology
-    exConst = 0.5;  // A guess currently, can be set by eigenspectrum analysis later
+    exConst = 1.054;  // What Guillaume sets it to in his paper
     inhibConst = -((SIZE-inhibCols)*gamma*exSparce*exConst)/(inhibSparce*inhibCols);
+    //inhibConst = -1.9365;   //Valid for 200x200 cols, from Guillaume's paper
     
     for(int i=0; i<SIZE; i++)
     {
