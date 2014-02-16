@@ -304,20 +304,14 @@ void Schur(double *A[], double *VS[], int SIZE)
     int LWORK;
     int SDIM;
     int INFO;
-    double *EIG_Re[SIZE];
-    double *EIG_Im[SIZE];
-    double *WORK[SIZE];
-    bool *BWORK[SIZE];
+    double EIG_Re[SIZE][SIZE];
+    double EIG_Im[SIZE][SIZE];
+    double WORK[SIZE][SIZE];
+    bool BWORK[SIZE][SIZE];
     double *fA; 
     double *fVS;
+
     
-    for(int i=0; i<SIZE; i++)
-    {
-        EIG_Re[i] = new double[SIZE];
-        EIG_Im[i] = new double[SIZE];
-        WORK[i] = new double[SIZE];
-        BWORK[i] = new bool[SIZE];
-    }
     
     fA = FArrayConvert(A, SIZE);
     fVS = FArrayConvert(VS, SIZE);

@@ -6,6 +6,7 @@
 #include<cstdlib>
 #include"optimise.h"
 #include"utilities.h"
+#include<vector>
 
 using namespace std;
 
@@ -14,23 +15,25 @@ using namespace std;
  *  to minimise the ssa value.  Optimisation is by gradient descent */
 void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, int SIZE)
 {
-    double  *A[SIZE];
-    double  *I[SIZE];
-    double  *P[SIZE];
-    double  *Q[SIZE];
-    double  *V[SIZE];
-    double  *S_Vect[SIZE];
-    double  *S_Vect_T[SIZE];
-    double  *gradMat[SIZE];
-    double  *QP[SIZE];
-    bool    conv;
-    double  *sa;
-    double  ssa;
-    double  ssaOld;
-    double  precision;
-    double  descentRate;
-    double  avgStrengh;
-    int     loopcount;
+    double      *A[SIZE];
+    double      *I[SIZE];
+    double      *P[SIZE];
+    double      *Q[SIZE];
+    double      *V[SIZE];
+    double      *S_Vect[SIZE];
+    double      *S_Vect_T[SIZE];
+    double      *gradMat[SIZE];
+    double      *QP[SIZE];
+    bool        conv;
+    double      *sa;
+    double      ssa;
+    double      ssaOld;
+    double      precision;
+    double      descentRate;
+    double      avgStrengh;
+    int         loopcount;
+    int         numReformed;
+    vector<double>  ssaWindow;
 
     for(int i=0; i<SIZE; i++)
     {
@@ -58,15 +61,20 @@ void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, int SIZE)
 
     conv = false;
     ssa = 0.0;
-    ssaOld = 10.0;  //initialised to greater than ssa for descentRate manipulation
-    precision = 0.0000001;
+    ssaOld = 100.0;  //initialised to greater than ssa for descentRate manipulation
+    precision = 0.0005;
     loopcount = 0;
     descentRate = 5;   // determines how far down slope each iteration updates
     Reparam(W, B, V, SIZE);
     OutputMat("reparamW.ascii", W, SIZE);
-    ofstream resFile;
-    resFile.open("SsaOptimise.ascii");
     
+    ofstream resFile;       //stores ssa values over loop
+    ofstream recFile;         // stores ssa start and end values
+    ofstream reformRecord;  // stores record of reform events
+    resFile.open("SsaOptimise.ascii");
+    reformRecord.open("refSynRecord.ascii");
+    recFile.open("SSArecord.ascii");
+
     
     // loops until the gradient descent algorithm has converged
     while(!conv)
@@ -75,6 +83,39 @@ void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, int SIZE)
         // solve SSA for current W matrix
         ssaOld = ssa;
         ssa = SimpleSSA(W, P, Q, S_Vect, eps, SIZE);
+        
+        // window for testing convergence
+        ssaWindow.push_back(ssa);
+        if(ssaWindow.size() > 100)
+        {
+            ssaWindow.erase(ssaWindow.begin());
+            //~ cout <<"Window difference measure = " <<abs(ssaWindow.front() - ssaWindow.back()) <<endl;
+            if(abs(ssaWindow.front() - ssaWindow.back()) < precision)
+            {
+                cout << "Converged" <<endl;
+                conv = true;
+            }
+        }
+        
+        if(loopcount == 7500)
+        {
+            cout <<"Not gonna happen" <<endl;
+            conv = true;
+        }
+        //~ if(ssa < 1.00)
+        //~ {
+            //~ cout << "Stabilised" << endl;
+            //~ conv = true;
+        //~ }
+        
+        if(ssa > 100)
+        {
+            cout <<"Unstable behaviour" <<endl;
+            OutputMat("divergentW.ascii", W, SIZE);
+            OutputMat("divergentB.ascii", B, SIZE);
+            OutputMat("divergentV.ascii", V, SIZE);
+            exit(0);
+        }
         
         for(int i=0; i<SIZE; i++)
         {
@@ -91,56 +132,54 @@ void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, int SIZE)
         
         // perform gradient descent to optimise V, then recalculate W
         GradDescent(V, gradMat, descentRate, inhibNum, SIZE);
-        ReformSyn(V, B, inhibNum, SIZE);
+        numReformed = ReformSyn(V, B, inhibNum, SIZE);
         RecalcW(W, B, V, SIZE);
         
+        if(numReformed)
+        {
+            reformRecord << loopcount <<"   " <<numReformed <<endl;
+        }            
         
-        if(abs(ssa - ssaOld) < precision)
+        if(loopcount == 0)
         {
-            cout << "Converged" <<endl;
-            conv = true;
+            recFile << ssa << "   ";
         }
-        /*
-        if(loopcount == 1000)
+        
+        int d = loopcount%50;
+        if(d == 0)
         {
-            cout <<"That's enough i think..." <<endl;
-            conv = true;
-        }
-        */
-        if(ssa < 1.00)
-        {
-            cout << "Stabilised" << endl;
-            conv = true;
-        }
-        if(ssa > 100)
-        {
-            cout <<"Unstable behaviour" <<endl;
-            OutputMat("divergentW.ascii", W, SIZE);
-            OutputMat("divergentB.ascii", B, SIZE);
-            OutputMat("divergentV.ascii", V, SIZE);
-            exit(0);
-        }
+            cout <<"SSA on loop " << loopcount << ": " <<ssa <<endl;
+        } 
         
         resFile << ssa <<endl;
                 
         //cout <<endl <<endl;
-        cout <<"SSA on loop " << loopcount << ": " <<ssa <<endl; 
+        //~ cout <<"SSA on loop " << loopcount << ": " <<ssa <<endl; 
         loopcount++;
     }
+    // records final SSA for octave plotting
+    cout <<"Final SSA = " <<ssa <<endl;
+    recFile <<ssa <<endl;
+    recFile.close();
+
     resFile.close();
+    reformRecord.close();
 
     OutputMat("reparStabW.ascii", W, SIZE);
+    OutputMat("reparStabV.ascii", V, SIZE);
+    OutputMat("reparStabB.ascii", B, SIZE);
     
     for(int i=0; i<SIZE; i++)
     {
-        delete[] P[i];
-        delete[] Q[i];
-        delete[] gradMat[i];
-        delete[] QP[i];
-        delete[] A[i];
-        delete[] I[i];
-        delete[] V[i];
-        delete[] S_Vect_T[i];
+        delete  A[i];
+        delete  I[i];
+        delete  P[i];
+        delete  Q[i];
+        delete  V[i];
+        delete  S_Vect[i];
+        delete  S_Vect_T[i];
+        delete  gradMat[i];
+        delete  QP[i];
     }
 
     return;
@@ -148,20 +187,25 @@ void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, int SIZE)
 
 
 /*  Forms new synapses if some decay to zero        */
-void ReformSyn(double *V[], int *B[], int inhibNum, int SIZE)
+int ReformSyn(double *V[], int *B[], int inhibNum, int SIZE)
 {
     double initVal;
     double decayVal;
     int exNum;
     int newCol;
-    bool test; 
+    int refNum;
+    bool test;
     
     exNum = SIZE - inhibNum;
     initVal = -5;
     decayVal = -5;
+    refNum = 0;
     
     OutputMat("refStabTestV1.ascii", V, SIZE);
     OutputMat("refStabTestB1.ascii", B, SIZE);
+    
+    srand(time(NULL));  //seeds the rand() function with the UNIX time
+
     
     //cout << "reforming..." <<endl;
     for(int i=0; i<SIZE; i++)
@@ -182,7 +226,7 @@ void ReformSyn(double *V[], int *B[], int inhibNum, int SIZE)
                 cout <<V[i][newCol] <<endl;
                 V[i][j] = 0;
                 B[i][j] = 0;
-                
+                refNum ++;  
                 test = true;
             }
         }
@@ -195,7 +239,7 @@ void ReformSyn(double *V[], int *B[], int inhibNum, int SIZE)
         OutputMat("refStabTestB2.ascii", B, SIZE);
     }
     
-    return;
+    return refNum;
 }
 
 
@@ -215,15 +259,6 @@ void FormGradMat(double *gradMat[], double *W[], double *QP[], double *S_Vect[],
     
     //cout << "Forming gradmat..." << endl;
     
-    //  Calculate the matrix of schur vectors, V
-    //~ Schur(A, V, SIZE);
-    //~ for(int i=0; i<SIZE; i++)
-    //~ {
-        //~ for(int j=0; j<SIZE; j++)
-        //~ {
-            //~ Vt[i][j] = V[j][i];
-        //~ }
-    //~ }
     tr = Trace(QP, SIZE);    
     for(int i=0; i<SIZE; i++)
     {

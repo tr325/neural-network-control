@@ -3,6 +3,7 @@
 #include<iostream>
 #include<cmath>
 #include<cstdlib>
+#include<time.h>
 #include"generateW.h"
 
 using namespace std;
@@ -16,6 +17,9 @@ void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE)
     int exCols;
     double gamma;
     double randx;
+    double exOmega;
+    double inOmega;
+    double specRad;
     
     while(inhibCols > SIZE)
     {
@@ -26,9 +30,16 @@ void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE)
     inhibSparce = 0.4;
     exSparce = 0.1;
     gamma = 3.00;   // From Biology
-    exConst = 1.054;  // What Guillaume sets it to in his paper
-    inhibConst = -((SIZE-inhibCols)*gamma*exSparce*exConst)/(inhibSparce*inhibCols);
-    //inhibConst = -1.9365;   //Valid for 200x200 cols, from Guillaume's paper
+    specRad = 3.00;
+    exOmega = specRad/(sqrt(exSparce*(1-exSparce)*(1+gamma*gamma)/2));
+    inOmega = specRad/(sqrt(inhibSparce*(1-inhibSparce)*(1+gamma*gamma)/2));
+    exConst = exOmega/sqrt(SIZE);
+    inhibConst = -gamma*inOmega/sqrt(SIZE);
+    
+    
+    //~ exConst = 1.054;  // What Guillaume sets it to in his paper
+    //~ inhibConst = -((SIZE-inhibCols)*gamma*exSparce*exConst)/(inhibSparce*inhibCols);
+    srand(time(NULL));  //seeds the rand() function with the UNIX time
     
     for(int i=0; i<SIZE; i++)
     {

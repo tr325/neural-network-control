@@ -27,8 +27,9 @@ void Reparam(double *W[], int *B[], double *V[], int SIZE);
 void RecalcW(double *W[], int *B[], double *V[], int SIZE);
 
 
-/*  Forms new synapses if some decay to zero        */
-void ReformSyn(double *V[], int *B[], int inhibNum, int SIZE);
+/*  Forms new synapses if some decay to zero            */
+/*  Returns number of synapses which have been reformed */
+int ReformSyn(double *V[], int *B[], int inhibNum, int SIZE);
 
 
 #endif

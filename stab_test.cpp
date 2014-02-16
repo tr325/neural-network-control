@@ -3,6 +3,7 @@
 #include<iostream>
 #include<iomanip>
 #include<fstream>
+#include<stdlib.h>
 #include"generateW.h"
 #include"optimise.h"
 #include"utilities.h"
@@ -10,16 +11,22 @@
 using namespace std;
 
 
-int main()
+int main(int argc, char* argv[])
 {
-    int SIZE;
     double eps;
-    int inhibCols;
-
-    cout<< "Enter the dimension of matrix W:" <<endl;
-    cin >> SIZE;
-    cout << "How many inhibitory columns?" <<endl;
-    cin >> inhibCols;
+    
+    // decode arguments
+    if(argc < 2) {
+        printf("You must provide 2 arguments - dimension of W and the number of inhibitory columns\n");
+        exit(0);
+    }
+    // report settings
+    printf("SIZE = %i\n", atoi(argv[1]));
+    printf("inhibCols = %i\n", atoi(argv[2]));
+    
+    int SIZE = atoi(argv[1]);
+    int inhibCols = atoi(argv[2]);
+    
     eps = 0.01;
 
     cout << setprecision(7); 
