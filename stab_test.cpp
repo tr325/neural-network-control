@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
     double eps;
     
     // decode arguments
-    if(argc < 2) {
+    if(argc != 3) {
         printf("You must provide 2 arguments - dimension of W and the number of inhibitory columns\n");
         exit(0);
     }

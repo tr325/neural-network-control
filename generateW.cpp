@@ -14,12 +14,16 @@ void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE)
     double exSparce;
     double inhibConst;
     double exConst; 
-    int exCols;
+    int    exCols;
     double gamma;
     double randx;
     double exOmega;
     double inOmega;
     double specRad;
+    double omSq;
+    double exSq;
+    double inSq;
+    double sqrtN;
     
     while(inhibCols > SIZE)
     {
@@ -27,15 +31,27 @@ void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE)
         cin >> inhibCols;
     }
     exCols = SIZE - inhibCols;
-    inhibSparce = 0.4;
-    exSparce = 0.1;
-    gamma = 3.00;   // From Biology
+    inhibSparce = 0.2;
+    exSparce = inhibSparce;  // allows the spectral radius formula used below (apparently easy to alter...)
     specRad = 3.00;
-    exOmega = specRad/(sqrt(exSparce*(1-exSparce)*(1+gamma*gamma)/2));
-    inOmega = specRad/(sqrt(inhibSparce*(1-inhibSparce)*(1+gamma*gamma)/2));
-    exConst = exOmega/sqrt(SIZE);
-    inhibConst = -gamma*inOmega/sqrt(SIZE);
+
+    // Only valid for constant sparcity.  Rajan for more detail (variance etc).
+    sqrtN = double(sqrt(SIZE));
+    omSq = specRad*specRad/(inhibSparce*(1-inhibSparce));
+    exSq = omSq*inhibCols/exCols;
+    inSq = omSq*exCols/inhibCols;
+    exConst = sqrt(exSq)/sqrtN;
+    inhibConst = -sqrt(inSq)/sqrtN;
     
+    
+    
+    //~ gamma = 3.00;   // From Biology
+    //~ 
+    //~ exOmega = specRad/(sqrt(exSparce*(1-exSparce)*(1+gamma*gamma)/2));
+    //~ inOmega = specRad/(sqrt(inhibSparce*(1-inhibSparce)*(1+gamma*gamma)/2));
+    //~ exConst = exOmega/sqrt(SIZE);
+    //~ inhibConst = -gamma*inOmega/sqrt(SIZE);
+    //~ 
     
     //~ exConst = 1.054;  // What Guillaume sets it to in his paper
     //~ inhibConst = -((SIZE-inhibCols)*gamma*exSparce*exConst)/(inhibSparce*inhibCols);
