@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
     int SIZE = atoi(argv[1]);
     int inhibCols = atoi(argv[2]);
     
-    eps = 0.01;
+    eps = 0.001;
 
     cout << setprecision(7); 
     double *W[SIZE];

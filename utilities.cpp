@@ -66,8 +66,9 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double *V[], double eps,
             }
         }
         
-        // convert A to Schur form using dgees_        
-        Schur(A, V, SIZE);    
+        // convert A to Schur form using dgees_
+        Schur(A, V, SIZE);
+  
         
         // Find SA value (max value of diagonals of Schur form) 
         // operates on first loop only
@@ -84,8 +85,10 @@ double SimpleSSA(double *W[], double *P[], double *Q[], double *V[], double eps,
             Lyap(A, Q, true, SIZE);
             Lyap(A, P, false, SIZE);
 
-            // use Newton-Raphson method to find new s value            
+
+            // use Newton-Raphson method to find new s value
             conv = Newton(Q, P, eps, spectralAbcissa, precision, s, SIZE);
+
         }
         
         loopcount++;
@@ -310,12 +313,11 @@ void Schur(double *A[], double *VS[], int SIZE)
     bool BWORK[SIZE][SIZE];
     double *fA; 
     double *fVS;
-
-    
     
     fA = FArrayConvert(A, SIZE);
     fVS = FArrayConvert(VS, SIZE);
-    
+
+
     JOBVS = 'V';
     SORT = 'N';
     N = SIZE;
@@ -325,11 +327,11 @@ void Schur(double *A[], double *VS[], int SIZE)
 
     //cout << "dgees_() called here..." <<endl;
     dgees_(&JOBVS, &SORT, 0, &N, fA, &LDA, &SDIM, *EIG_Re, *EIG_Im, fVS, &LDVS, *WORK, &LWORK, *BWORK, &INFO);
+
     //cout << " and returned" <<endl;
-    
     CArrayConvert(fA, A, SIZE);
     CArrayConvert(fVS, VS, SIZE);
-    
+
     delete[] fA;
     delete[] fVS;
     

@@ -70,8 +70,12 @@ stab_test.o: stab_test.cpp utilities.h generateW.h optimise.h
 	
 stab_test: stab_test.o utilities.o optimise.o generateW.o
 	g++ stab_test.o generateW.o utilities.o optimise.o -lblas -llapack -w -o stabtest
-	
-	
+
+scale_test.o: scale_test.cpp utilities.h optimise.h generateW.h
+	g++ -c -w scale_test.cpp
+
+scale_test: scale_test.o utilities.o optimise.o generateW.o
+	g++ scale_test.o generateW.o utilities.o optimise.o -lblas -llapack -w -o scaletest
 	
 	
 	
