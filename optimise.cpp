@@ -14,7 +14,7 @@ using namespace std;
 
 /*  Takes the input weighting matrix, and optimises the second half
  *  to minimise the ssa value.  Optimisation is by gradient descent */
-void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, int SIZE)
+void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, bool wPlast, int SIZE)
 {
     double      *A[SIZE];
     double      *I[SIZE];
@@ -129,7 +129,10 @@ void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, int SIZE)
         
         // perform gradient descent to optimise V, then recalculate W
         GradDescent(V, gradMat, descentRate, inhibNum, SIZE);
-        numReformed = ReformSyn(V, B, inhibNum, SIZE);
+        if(wPlast)
+        {
+            numReformed = ReformSyn(V, B, inhibNum, SIZE);
+        }
         RecalcW(W, B, V, SIZE);
 
         

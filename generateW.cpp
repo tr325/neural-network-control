@@ -9,7 +9,7 @@
 
 using namespace std;
 
-void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE)
+void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE, bool pairwise, bool wholeNet)
 {
     double inhibSparce;
     double exSparce;
@@ -27,17 +27,18 @@ void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE)
     double cMin;
     double kappa;
 
-    srand(time(NULL));  //seeds the rand() function with the UNIX time
+    srand(clock());  //seeds the rand() function with the processor ticks number
 
     while(inhibCols > SIZE)
     {
         cout << "Inhibitory columns must be less than SIZE, try again:" <<endl;
         cin >> inhibCols;
     }
+    
     exCols = SIZE - inhibCols;
     inhibSparce = 0.2;
     exSparce = inhibSparce;  // allows the spectral radius formula used below (apparently easy to alter...)
-    specRad = 0.4;
+    specRad = 0.4;      // spectral radius constraint parameter
     kappa = 0.5;  // parameter for correllation antisymmetry
 
         
@@ -62,8 +63,16 @@ void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE)
     //~ exConst = 1.054;  // What Guillaume sets it to in his paper
     //~ inhibConst = -((SIZE-inhibCols)*gamma*exSparce*exConst)/(inhibSparce*inhibCols);
 
-    initB(B, cMin, exSparce, kappa, exCols, SIZE);
+    if(pairwise)
+    {
+        initBPairCorr(B, cMin, exSparce, kappa, exCols, SIZE);
+    }
+    else
+    {
+        initBnoCorr(B, exSparce, exCols, SIZE, wholeNet);
+    }
 
+    // populates W matrix given and initialsed B matrix
     for(int i=0; i<SIZE; i++)
     {
         for(int j=0; j<SIZE; j++)
@@ -94,38 +103,6 @@ void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE)
         }
     }
 
-   /* 
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<exCols; j++)
-        {
-            if(randx() < exSparce)
-            {
-                W[i][j] = exConst;
-            }
-            else
-            {
-                W[i][j] = 0;
-            }
-        }
-    }
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=exCols; j<SIZE; j++)
-        {
-            if(randx() < inhibSparce)
-            {
-                W[i][j] = inhibConst;
-            }
-            else
-            {
-                W[i][j] = 0;
-            }
-        }
-    }
-    */
-    //EnforceDale(W, B, inhibCols, SIZE);
-
     OutputMat("generatedTestB.ascii", B, SIZE);
     
     return;
@@ -142,10 +119,58 @@ double randx(void)
 }
 
 
+/*  Initialises the B matrix WITHOUT pairwise correlations, and with the option
+ *  to keep the E->E and E->I connections constant, and only reainitialse the
+ *  I-E and I->I sections of the network                                        */
+void initBnoCorr(int *B[], double sparce, int exCols, int SIZE, bool wholeNet)
+{
+    srand(clock());
+    // Optional part to re-initialise E network
+    if(wholeNet)
+    {
+        for(int i=0; i<SIZE; i++)
+        {
+            for(int j=0; j<exCols; j++)
+            {
+                if(randx() < sparce)
+                {
+                    B[i][j] = 1;
+                }
+                else
+                {
+                    B[i][j] = 0;
+                }
+            }
+        }
+    }
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=exCols; j<SIZE; j++)
+        {
+            if(randx() < sparce)
+            {
+                B[i][j] = 1;
+            }
+            else
+            {
+                B[i][j] = 0;
+            }
+        }
+    }
+
+    for(int i=0; i<SIZE; i++)
+    {
+        B[i][i] = 0;
+    }
+    
+    return;
+}
+
+
 /*  Initialises the B matrix, using pairwise correlation probabilities laid out in G's paper
  *  Only valid (in this form) for const sparcity (hence only one sparcity passed)
  *  skews towards positive symmetry                                               */
-void initB(int *B[], double cMin, double exSparce, double kappa, int exCols, int SIZE)
+void initBPairCorr(int *B[], double cMin, double exSparce, double kappa, int exCols, int SIZE)
 {
     double recipTrue;
     double recipFalse;
@@ -157,7 +182,7 @@ void initB(int *B[], double cMin, double exSparce, double kappa, int exCols, int
 
     //~ cout << "cij same neuron type = " << cijSameNType <<endl;
     //~ cout << "cij opp neuron type = " << cijOppNType <<endl;
-    srand(time(NULL));
+    srand(clock());
     
     for(int i=0; i<SIZE; i++)
     {

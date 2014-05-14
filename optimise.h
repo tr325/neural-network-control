@@ -6,7 +6,7 @@
 /*  Takes a weight matrix as an input, and optimises
  *  the final SIZE/2 columns to minimise the SSA using
  *  gradient descent techniques.                        */
-void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, int SIZE);
+void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, bool wPlast, int SIZE);
 
 
 /*  Forms the gradient matrix, d(SSA)/dW                */

@@ -76,6 +76,11 @@ scale_test.o: scale_test.cpp utilities.h optimise.h generateW.h
 
 scale_test: scale_test.o utilities.o optimise.o generateW.o
 	g++ scale_test.o generateW.o utilities.o optimise.o -lblas -llapack -w -o scaletest
-	
+
+res_gen.o: res_gen.cpp utilities.h optimise.h generateW.h
+	g++ -c -w res_gen.cpp
+
+res_gen: res_gen.o utilities.o optimise.o generateW.o
+	g++ res_gen.o generateW.o utilities.o optimise.o -lblas -llapack -w -o resgen
 	
 	
