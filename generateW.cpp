@@ -9,7 +9,7 @@
 
 using namespace std;
 
-void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE, bool pairwise, bool wholeNet)
+void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE, bool pairwise, bool wholeNet, double kappa)
 {
     double inhibSparce;
     double exSparce;
@@ -25,7 +25,6 @@ void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE, bool pairwise,
     double inSq;
     double sqrtN;
     double cMin;
-    double kappa;
 
     srand(clock());  //seeds the rand() function with the processor ticks number
 
@@ -38,8 +37,7 @@ void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE, bool pairwise,
     exCols = SIZE - inhibCols;
     inhibSparce = 0.2;
     exSparce = inhibSparce;  // allows the spectral radius formula used below (apparently easy to alter...)
-    specRad = 0.4;      // spectral radius constraint parameter
-    kappa = 0.5;  // parameter for correllation antisymmetry
+    specRad = 1.5;        // spectral radius constraint parameter
 
         
     // Only valid for constant sparcity.  Rajan for more detail (variance etc).
@@ -65,7 +63,7 @@ void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE, bool pairwise,
 
     if(pairwise)
     {
-        initBPairCorr(B, cMin, exSparce, kappa, exCols, SIZE);
+        initBPairCorr(B, cMin, exSparce, kappa, exCols, SIZE, wholeNet);
     }
     else
     {
@@ -170,7 +168,7 @@ void initBnoCorr(int *B[], double sparce, int exCols, int SIZE, bool wholeNet)
 /*  Initialises the B matrix, using pairwise correlation probabilities laid out in G's paper
  *  Only valid (in this form) for const sparcity (hence only one sparcity passed)
  *  skews towards positive symmetry                                               */
-void initBPairCorr(int *B[], double cMin, double exSparce, double kappa, int exCols, int SIZE)
+void initBPairCorr(int *B[], double cMin, double exSparce, double kappa, int exCols, int SIZE, bool wholenet)
 {
     double recipTrue;
     double recipFalse;
@@ -178,7 +176,8 @@ void initBPairCorr(int *B[], double cMin, double exSparce, double kappa, int exC
     double cijOppNType;
 
     cijSameNType = kappa;      //cMax = 1
-    cijOppNType = kappa*cMin;        
+    cijOppNType = kappa*cMin;
+    
 
     //~ cout << "cij same neuron type = " << cijSameNType <<endl;
     //~ cout << "cij opp neuron type = " << cijOppNType <<endl;
@@ -191,78 +190,167 @@ void initBPairCorr(int *B[], double cMin, double exSparce, double kappa, int exC
             // Upper right triangle
             if(i < j)
             {
-                if(randx() < exSparce)
+                if(j < exCols)
                 {
-                    //~ cout << "upper right initilised " <<i << ", " <<j <<endl;
-                    B[i][j] = 1;
+                    if(wholenet)
+                    {
+                        if(randx() < exSparce)
+                        {
+                            //~ cout << "upper right initilised " <<i << ", " <<j <<endl;
+                            B[i][j] = 1;
+                        }
+                        else
+                        {
+                            B[i][j] = 0;
+                        }
+                    }
                 }
                 else
                 {
-                    B[i][j] = 0;
+                    if(randx() < exSparce)
+                    {
+                        //~ cout << "upper right initilised " <<i << ", " <<j <<endl;
+                        B[i][j] = 1;
+                    }
+                    else
+                    {
+                        B[i][j] = 0;
+                    }
                 }
             }
             //  Lower left triangle
             else if(i > j)
             {
-                // corresponding element set 
-                if(B[j][i])
+                if(i<exCols)
                 {
-                    // for E->E and I->I synapses
-                    if(((i < exCols) && (j < exCols)) || ((i > exCols) && (j > exCols)))
+                    if(wholenet)
                     {
-                        recipTrue = exSparce + cijSameNType*(1 - exSparce);
-                        if(randx() < recipTrue)
+                        // corresponding element set 
+                        if(B[j][i])
                         {
-                            //~ cout << "lower left (same type) initilised " <<i << ", " <<j <<endl;
-                            B[i][j] = 1;
+                            // for E->E and I->I synapses
+                            if(((i < exCols) && (j < exCols)) || ((i > exCols) && (j > exCols)))
+                            {
+                                recipTrue = exSparce + cijSameNType*(1 - exSparce);
+                                if(randx() < recipTrue)
+                                {
+                                    //~ cout << "lower left (same type) initilised " <<i << ", " <<j <<endl;
+                                    B[i][j] = 1;
+                                }
+                                else
+                                {
+                                    B[i][j] = 0;
+                                }
+                            }
+                            // for E->I and I->E synapses
+                            else
+                            {
+                                recipTrue = exSparce + cijOppNType*(1 - exSparce);
+                                if(randx() < recipTrue)
+                                {
+                                    //~ cout << "lower left (opp type) initilised " <<i << ", " <<j <<endl;
+                                    B[i][j] = 1;
+                                }
+                                else
+                                {
+                                    B[i][j] = 0;
+                                }
+                            }
                         }
+                        // corresponding element not set
                         else
                         {
-                            B[i][j] = 0;
-                        }
-                    }
-                    // for E->I and I->E synapses
-                    else
-                    {
-                        recipTrue = exSparce + cijOppNType*(1 - exSparce);
-                        if(randx() < recipTrue)
-                        {
-                            //~ cout << "lower left (opp type) initilised " <<i << ", " <<j <<endl;
-                            B[i][j] = 1;
-                        }
-                        else
-                        {
-                            B[i][j] = 0;
+                                                // for E->E and I->I synapses
+                            if(((i < exCols) && (j < exCols)) || ((i > exCols) && (j > exCols)))
+                            {
+                                recipFalse = exSparce*(1 - cijSameNType);
+                                if(randx() < recipFalse)
+                                {
+                                    B[i][j] = 1;
+                                }
+                                else
+                                {
+                                    B[i][j] = 0;
+                                }
+                            }
+                            // for E->I and I->E synapses
+                            else
+                            {
+                                recipTrue = exSparce*(1 - cijOppNType);
+                                if(randx() < recipTrue)
+                                {
+                                    B[i][j] = 1;
+                                }
+                                else
+                                {
+                                    B[i][j] = 0;
+                                }
+                            }
                         }
                     }
                 }
-                // corresponding element not set
                 else
                 {
-                                        // for E->E and I->I synapses
-                    if(((i < exCols) && (j < exCols)) || ((i > exCols) && (j > exCols)))
+                    // corresponding element set 
+                    if(B[j][i])
                     {
-                        recipFalse = exSparce*(1 - cijSameNType);
-                        if(randx() < recipTrue)
+                        // for E->E and I->I synapses
+                        if(((i < exCols) && (j < exCols)) || ((i > exCols) && (j > exCols)))
                         {
-                            B[i][j] = 1;
+                            recipTrue = exSparce + cijSameNType*(1 - exSparce);
+                            if(randx() < recipTrue)
+                            {
+                                //~ cout << "lower left (same type) initilised " <<i << ", " <<j <<endl;
+                                B[i][j] = 1;
+                            }
+                            else
+                            {
+                                B[i][j] = 0;
+                            }
                         }
+                        // for E->I and I->E synapses
                         else
                         {
-                            B[i][j] = 0;
+                            recipTrue = exSparce + cijOppNType*(1 - exSparce);
+                            if(randx() < recipTrue)
+                            {
+                                //~ cout << "lower left (opp type) initilised " <<i << ", " <<j <<endl;
+                                B[i][j] = 1;
+                            }
+                            else
+                            {
+                                B[i][j] = 0;
+                            }
                         }
                     }
-                    // for E->I and I->E synapses
+                    // corresponding element not set
                     else
                     {
-                        recipTrue = exSparce*(1 - cijOppNType);
-                        if(randx() < recipTrue)
+                                            // for E->E and I->I synapses
+                        if(((i < exCols) && (j < exCols)) || ((i > exCols) && (j > exCols)))
                         {
-                            B[i][j] = 1;
+                            recipFalse = exSparce*(1 - cijSameNType);
+                            if(randx() < recipFalse)
+                            {
+                                B[i][j] = 1;
+                            }
+                            else
+                            {
+                                B[i][j] = 0;
+                            }
                         }
+                        // for E->I and I->E synapses
                         else
                         {
-                            B[i][j] = 0;
+                            recipTrue = exSparce*(1 - cijOppNType);
+                            if(randx() < recipTrue)
+                            {
+                                B[i][j] = 1;
+                            }
+                            else
+                            {
+                                B[i][j] = 0;
+                            }
                         }
                     }
                 }

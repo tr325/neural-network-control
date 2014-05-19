@@ -38,11 +38,11 @@ int main(int argc, char* argv[])
         B[i] = new int[SIZE];
     }
 
-    GenerateWMat(W, B, inhibCols, SIZE);
+    GenerateWMat(W, B, inhibCols, SIZE, false, true);
     OutputMat("generatedW.ascii", W, SIZE);
     OutputMat("generatedB.ascii", B, SIZE);
-    OptimiseWMat(W, B, eps, inhibCols, SIZE);
-    OutputMat("stabilizedW.ascii", W, SIZE);
+    OptimiseWMat(W, B, eps, inhibCols, true, SIZE);
+    OutputMat("stabilizedWnewconv.ascii", W, SIZE);
     OutputMat("stabilizedB.ascii", B, SIZE);
     
     for(int i=0; i<SIZE; i++)

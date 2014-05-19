@@ -33,67 +33,78 @@ int main(int argc, char* argv[])
 
     cout << setprecision(7); 
     double *W[SIZE];
+    double *Wref[SIZE];
     int *B[SIZE];
     for(int i=0; i<SIZE; i++)
     {
         W[i] = new double[SIZE];
+        Wref[i] = new double[SIZE];
         B[i] = new int[SIZE];
     }
 
     /************************************************
-     * Fixed E network, different I networks, no plasticity
-     * (change the numbers if you want (on input), but CHANGE FILENAME TOO
+     * change the numbers (on input), but CHANGE FILENAME TOO
      * ***********************************************/
     
     stringstream ss;
-    string fname1 = "fixedE8020noplast";
+    string fname1 = "fEfI8020withplast";  //edit if you do a different run to avoid data loss
+    string fname3 = "Kappa";
     string fname2 = ".ascii";
+    string ref = "REF";
     string fname;
-    bool wholeNet = false;
-    bool pairwise = false;
-    bool wPlast = false;
-    char *opfile;
-    GenerateWMat(W, B, inhibCols, SIZE, pairwise, true);
-    for(int i=0; i<25; i++)
-    {
-        ss.str("");
-        GenerateWMat(W, B, inhibCols, SIZE, pairwise, wholeNet);
-        OptimiseWMat(W, B, eps, inhibCols, wPlast, SIZE);
-        ss << fname1;
-        ss << i;
-        ss << fname2;
-        fname = ss.str();
-        opfile = &fname[0];
-        OutputMat(opfile, W, SIZE);
-    }
-    
-
-    /**************************************************
-     * Fixed E network, different initial I nets, with plasticity
-     * *********************************************************/
-    /*
-    stringstream ss;
-    string fname1 = "fixedE5050withPlast";
-    string fname2 = ".ascii";
-    string fname;
-    bool wholeNet = false;
-    bool pairwise = false;
+    string reffname;
+    int beta;
+    bool wholeNet = true;
+    bool pairwise = true;
     bool wPlast = true;
     char *opfile;
-    GenerateWMat(W, B, inhibCols, SIZE, pairwise, true);
-    for(int i=0; i<25; i++)
+    double kappa;
+
+    for(int i=0; i<SIZE; i++)
     {
-        ss.str("");
-        GenerateWMat(W, B, inhibCols, SIZE, pairwise, wholeNet);
-        OptimiseWMat(W, B, eps, inhibCols, wPlast, SIZE);
-        ss << fname1;
-        ss << i;
-        ss << fname2;
-        fname = ss.str();
-        opfile = &fname[0];
-        OutputMat(opfile, W, SIZE);
+        for(int j=0; j<SIZE; j++)
+        {
+            Wref[i][j] = W[i][j];
+        }
     }
-    */
+
+    ss << fname1 <<ref << fname2 <<fname3;
+    reffname = ss.str();
+    opfile = &reffname[0];
+    OutputMat(opfile, W, SIZE);
+    ss.str("");
+
+    for(int k=0; k<6; k++)
+    {
+
+        kappa = 0.2*k;    
+        GenerateWMat(W, B, inhibCols, SIZE, pairwise, wholeNet, kappa);
+        
+        for(int n=0; n<25; n++)
+        {
+            //~ // start from ref network again for fixed E fixed I trials
+            //~ for(int i=0; i<SIZE; i++)
+            //~ {
+                //~ for(int j=0; j<SIZE; j++)
+                //~ {
+                    //~ W[i][j] = beta*Wref[i][j];
+                //~ }
+            //~ }
+            //~ 
+            cout << endl <<endl << "OPTIMISATION NUMBER :" <<n+1 <<endl;
+            ss.str("");
+            GenerateWMat(W, B, inhibCols, SIZE, pairwise, wholeNet, kappa);
+            OptimiseWMat(W, B, eps, inhibCols, wPlast, SIZE);
+            ss << fname1;
+            ss << n;
+            ss << fname3;
+            ss << kappa;
+            ss << fname2;
+            fname = ss.str();
+            opfile = &fname[0];
+            OutputMat(opfile, W, SIZE);
+        }
+    }
 
     for(int i=0; i<SIZE; i++)
     {

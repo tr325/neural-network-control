@@ -5,26 +5,46 @@ function plotDynamicEvolution(W)
     
     W = squeeze(W);
     [dim p] = size(W);
-    x = normrnd(0, 1, dim, 1);
-    X = [];        %container for time-evolving x vectors
+    A = W - eye(dim);
+    
+    %to get largest direction of amplification (see G's paper)
+    Q = lyap(A', 2*eye(dim));
+    [a e] = eigs(Q, 1, 'lm');
+
+%    a = normrnd(0, 0.5, dim, 1);        %input preparatory signal
+    x = zeros(dim, 1);
+    xIP = a - W*a;
+    
+    X = [];         %container for time-evolving x vectors
     t = 0.01;       % time step
-    W = W - eye(dim);
+    
 
     %implement eqn xdot = W*x; 
+    %while input is held
     for i = 1:1000
-        X = [X x];
-        xdot = W*x;
+        if i >500
+            X = [X x];
+        end
+        xdot = A*x + xIP;
         x = x + t*xdot;
     end
-
+    %after input is released
+    for i = 1:999
+        X = [X x];
+        xdot = A*x;     
+        x = x + t*xdot;
+    end
+        
+    
     figure
     hold all
-    for i = 1:dim
+    % only 10 for clarity of image
+    for i = 25:35
         plot(X(i, :))
     end
-    xlabel('Time (iterations of dynamics loop)');
-    ylabel('Value of elements of x vector');
-%    print -deps dyn50example.eps
+    axis([0 1500])
+    xlabel('Time (arbitrary units)', 'fontsize', 15);
+%    ylabel('Value of elements of x vector', 'fontsize', 15);
     hold off
 
 %    figure

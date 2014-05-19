@@ -146,7 +146,7 @@ void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, bool wPlast, 
             recFile << ssa << "   ";
         }
         
-        int d = loopcount%50;
+        int d = loopcount%200;
         if(d == 1)
         {
             cout <<"SSA on loop " << loopcount << ": " <<ssa <<endl;
@@ -181,6 +181,10 @@ void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, bool wPlast, 
     resFile.close();
     reformRecord.close();
 
+    ofstream loopCountRecord;
+    loopCountRecord.open("OptimisationCovergenceTime.ascii");
+    loopCountRecord << "SIZE = " <<SIZE << "no. of inhibCols = " <<inhibNum <<", no. of loops to stabilise = " <<loopcount << endl;
+    loopCountRecord.close();
     //~ OutputMat("reparStabW.ascii", W, SIZE);
     //~ OutputMat("reparStabV.ascii", V, SIZE);
     //~ OutputMat("reparStabB.ascii", B, SIZE);
