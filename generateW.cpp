@@ -37,7 +37,7 @@ void GenerateWMat(double *W[], int *B[], int inhibCols, int SIZE, bool pairwise,
     exCols = SIZE - inhibCols;
     inhibSparce = 0.2;
     exSparce = inhibSparce;  // allows the spectral radius formula used below (apparently easy to alter...)
-    specRad = 1.5;        // spectral radius constraint parameter
+    specRad = 1.4;        // spectral radius constraint parameter
 
         
     // Only valid for constant sparcity.  Rajan for more detail (variance etc).

@@ -35,11 +35,13 @@ int main(int argc, char* argv[])
     double *W[SIZE];
     double *Wref[SIZE];
     int *B[SIZE];
+    int *Bref[SIZE];
     for(int i=0; i<SIZE; i++)
     {
         W[i] = new double[SIZE];
         Wref[i] = new double[SIZE];
         B[i] = new int[SIZE];
+        Bref[i] = new int[SIZE];
     }
 
     /************************************************
@@ -48,49 +50,61 @@ int main(int argc, char* argv[])
     
     stringstream ss;
     string fname1 = "fEfI8020withplast";  //edit if you do a different run to avoid data loss
-    string fname3 = "Kappa";
+    string fname3 = "newBeta";
     string fname2 = ".ascii";
     string ref = "REF";
     string fname;
     string reffname;
-    int beta;
-    bool wholeNet = true;
-    bool pairwise = true;
+    double beta;
+    bool wholeNet = false;
+    bool pairwise = false;
     bool wPlast = true;
     char *opfile;
     double kappa;
+    double betas[5] = {1, 1.5, 2, 2.5, 3};
+    
 
-    for(int i=0; i<SIZE; i++)
-    {
-        for(int j=0; j<SIZE; j++)
-        {
-            Wref[i][j] = W[i][j];
-        }
-    }
-
+    
+    GenerateWMat(W, B, inhibCols, SIZE, pairwise, true, kappa);
     ss << fname1 <<ref << fname2 <<fname3;
     reffname = ss.str();
     opfile = &reffname[0];
     OutputMat(opfile, W, SIZE);
     ss.str("");
 
-    for(int k=0; k<6; k++)
+    for(int i=0; i<SIZE; i++)
+    {
+        for(int j=0; j<SIZE; j++)
+        {
+            Wref[i][j] = W[i][j];
+            Bref[i][j] = B[i][j];
+        }
+    }
+    
+    for(int k=0; k<5; k++)
     {
 
-        kappa = 0.2*k;    
-        GenerateWMat(W, B, inhibCols, SIZE, pairwise, wholeNet, kappa);
+        //~ kappa = 0.2*k;    
+        //~ GenerateWMat(W, B, inhibCols, SIZE, pairwise, wholeNet, kappa);
+        beta = betas[k];
+        cout << "******************************************" <<endl;
+        cout << "BETA= " <<beta << endl;
         
-        for(int n=0; n<25; n++)
+        
+        
+        for(int n=0; n<10; n++)
         {
-            //~ // start from ref network again for fixed E fixed I trials
-            //~ for(int i=0; i<SIZE; i++)
-            //~ {
-                //~ for(int j=0; j<SIZE; j++)
-                //~ {
-                    //~ W[i][j] = beta*Wref[i][j];
-                //~ }
-            //~ }
-            //~ 
+            // start from ref network again for fixed E fixed I trials
+            //~  suck as beta tests (scaling network)
+            for(int i=0; i<SIZE; i++)
+            {
+                for(int j=0; j<SIZE; j++)
+                {
+                    W[i][j] = beta*Wref[i][j];
+                    B[i][j] = Bref[i][j];
+                }
+            }
+            
             cout << endl <<endl << "OPTIMISATION NUMBER :" <<n+1 <<endl;
             ss.str("");
             GenerateWMat(W, B, inhibCols, SIZE, pairwise, wholeNet, kappa);
@@ -98,7 +112,7 @@ int main(int argc, char* argv[])
             ss << fname1;
             ss << n;
             ss << fname3;
-            ss << kappa;
+            ss << beta;
             ss << fname2;
             fname = ss.str();
             opfile = &fname[0];

@@ -36,6 +36,7 @@ void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, bool wPlast, 
     int         loopcount;
     int         numReformed;
     int         itLimit;
+    int         counter;
     vector<double>  ssaWindow;
     clock_t     startTime;
 
@@ -217,6 +218,7 @@ int ReformSyn(double *V[], int *B[], int inhibNum, int SIZE)
     int fInd;
     int refNum;
     bool test;
+    int row;
     vector<int> freeCols;
     
     exNum = SIZE - inhibNum;
@@ -237,15 +239,19 @@ int ReformSyn(double *V[], int *B[], int inhibNum, int SIZE)
         {
             if(V[i][j] < decayVal)
             {
+                row = i;
                 //~ cout << "Decayed synapse: " <<i+1 <<", " <<j+1 <<"; strength = "<<V[i][j] <<endl;
-                for(int k=exNum; k<SIZE; k++)
+                while(freeCols.size() == 0)
                 {
-                    if((B[i][k] == 0) && (i != k))
+                    for(int k=exNum; k<SIZE; k++)
                     {
-                        freeCols.push_back(k);
+                        if((B[row][k] == 0) && (row != k))
+                        {
+                            freeCols.push_back(k);
+                        }
                     }
+                    row++;                    
                 }
-
                 fInd = rand()%freeCols.size();
                 newCol = freeCols[fInd];
                 //~ cout << "Formed synapse: " <<i+1 <<", " <<newCol+1 <<"; value updated from " <<V[i][newCol] <<" to ";
@@ -256,8 +262,8 @@ int ReformSyn(double *V[], int *B[], int inhibNum, int SIZE)
                 B[i][j] = 0;
                 refNum ++;  
                 test = true;           
-
-
+                
+                
 
                 //~ newCol = (rand() % inhibNum) + exNum;
                 //~ while((B[i][newCol] != 0) || (newCol == i))
@@ -362,7 +368,7 @@ void RecalcW(double *W[], int *B[], double *V[], int SIZE)
         }
     }
     
-    return;    
+    return;
 }
 
 

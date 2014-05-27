@@ -38,7 +38,10 @@ int main(int argc, char* argv[])
         B[i] = new int[SIZE];
     }
 
-    GenerateWMat(W, B, inhibCols, SIZE, false, true);
+    bool pairwise = true;
+    bool wholeNet = true;
+    double kappa = 0;
+    GenerateWMat(W, B, inhibCols, SIZE, pairwise, wholeNet, kappa);
     OutputMat("generatedW.ascii", W, SIZE);
     OutputMat("generatedB.ascii", B, SIZE);
     OptimiseWMat(W, B, eps, inhibCols, true, SIZE);
