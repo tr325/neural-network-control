@@ -12,3 +12,6 @@ varying the inhibitory connection locations and strengths to match the excitator
 
 *.m files contain scripts for analysing the output of trials involving several runs of the stabilisation procedure. 
 *_test.cpp files were used for testing of the functions in the core *.cpp files.
+
+I can email a copy of the final report for the project (my Master's year project) if you want more detail on the 
+methods, results and conclusions of the investigation.
