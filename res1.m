@@ -56,41 +56,41 @@ disp('Correlation values for LOGICAL 5050np, 8020np, 5050wp, 8020wp:')
   lcorr
  
 %Making average network images
-%a5050np = calcAvgInhibNet(fnames{1}, 50, 100);
+a5050np = calcAvgInhibNet(fnames{1}, '.ascii', 50, 100);
 %niceImagesc(a5050np);
 %%print -depsc2 'avgfE5050np.eps'
-%a8020np = calcAvgInhibNet(fnames{2}, 20, 100);
+a8020np = calcAvgInhibNet(fnames{2}, '.ascii',20, 100);
 %niceImagesc(a8020np);  
 %%print -depsc2 'avgfE8020np.eps'
-%a5050wp = calcAvgInhibNet(fnames{3}, 50, 100);
+a5050wp = calcAvgInhibNet(fnames{3},'.ascii', 50, 100);
 %niceImagesc(a5050wp); 
 %%print -depsc2 'avgfE5050wp.eps'
-%a8020wp = calcAvgInhibNet(fnames{4}, 20, 100);
+a8020wp = calcAvgInhibNet(fnames{4}, '.ascii',20, 100);
 %niceImagesc(a8020wp);
 %print -depsc2 'avgfE8020wp.eps'
 
 
 %eigenvalue plots - GET A REFERENCE TO COMPARE THEM TO
-p1 = squeeze(nop5050s(15,:,:));
-figure; plot(eig(p1), '.');
-axis('equal'); axis('square');
-%title('np5050')
-print -depsc2 'fE5050npEigs.eps'
-p2 = squeeze(nop8020s(12,:,:));
-figure; plot(eig(p2), '.');
-%title('np8020')
-axis('equal'); axis('square');
-print -depsc2 'fE8020npEigs.eps'
-p3 = squeeze(wp5050s(12,:,:));
-figure; plot(eig(p3), '.');
-%title('wp5050')
-axis('equal'); axis('square');
-print -depsc2 'fE5050wpEigs.eps'
-p4 = squeeze(wp8020s(12,:,:));
-figure; plot(eig(p4), '.');
-%title('wp8020')
-axis('equal'); axis('square');
-print -depsc2 'fE8020wpEigs.eps'
+%p1 = squeeze(nop5050s(15,:,:));
+%figure; plot(eig(p1), '.');
+%axis('equal'); axis('square');
+%%title('np5050')
+%print -depsc2 'fE5050npEigs.eps'
+%p2 = squeeze(nop8020s(12,:,:));
+%figure; plot(eig(p2), '.');
+%%title('np8020')
+%axis('equal'); axis('square');
+%print -depsc2 'fE8020npEigs.eps'
+%p3 = squeeze(wp5050s(12,:,:));
+%figure; plot(eig(p3), '.');
+%%title('wp5050')
+%axis('equal'); axis('square');
+%print -depsc2 'fE5050wpEigs.eps'
+%p4 = squeeze(wp8020s(12,:,:));
+%figure; plot(eig(p4), '.');
+%%title('wp8020')
+%axis('equal'); axis('square');
+%print -depsc2 'fE8020wpEigs.eps'
 
 
 % plots of dynamics of these matrices

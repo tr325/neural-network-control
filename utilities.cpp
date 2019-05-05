@@ -294,9 +294,7 @@ void CArrayConvert(double fA[], double *cA[], int dimCA)
     }
 }
 
-/*  Converts input matrix A to Schur form (req for dtrsyl)  
- *  input matrix should be coverted for passing to Fortran by 
- *  FArrayConvert() before being passed to this funciton        */
+/*  Converts input matrix A to Schur form (req for dtrsyl)        */
 void Schur(double *A[], double *VS[], int SIZE)
 {
     char JOBVS;

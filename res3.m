@@ -4,17 +4,24 @@
 f1 = 'fEfI8020withplast';
 f2 = '.ascii';
 
-%for i = 1:25
-%%    
-%    kappa0(i, :, :) = load([f1 num2str(i-1) 'Kappa0' f2]);
-%    kappa2(i, :, :) = load([f1 num2str(i-1) 'Kappa0.2' f2]);
-%    kappa4(i, :, :) = load([f1 num2str(i-1) 'Kappa0.4' f2]);
-%    kappa6(i, :, :) = load([f1 num2str(i-1) 'Kappa0.6' f2]);
-%    kappa8(i, :, :) = load([f1 num2str(i-1) 'Kappa0.8' f2]);
-%    kappa10(i, :, :) = load([f1 num2str(i-1) 'Kappa1' f2]);
-%
-%end
+for i = 1:25
+%    
+    kappa0(i, :, :) = load([f1 num2str(i-1) 'Kappa0' f2]);
+    kappa2(i, :, :) = load([f1 num2str(i-1) 'Kappa0.2' f2]);
+    kappa4(i, :, :) = load([f1 num2str(i-1) 'Kappa0.4' f2]);
+    kappa6(i, :, :) = load([f1 num2str(i-1) 'Kappa0.6' f2]);
+    kappa8(i, :, :) = load([f1 num2str(i-1) 'Kappa0.8' f2]);
+    kappa10(i, :, :) = load([f1 num2str(i-1) 'Kappa1' f2]);
+
+end
 %refNet = load('fEfI8020withplastREF.asciiKappa');
+
+for i = 1:25
+
+    lim(i,:,:) = load(['limW' num2str(i-1) '.ascii']);
+    
+end
+
 
 %%%% eigenspectra
 %for i = 1:25
@@ -90,6 +97,7 @@ kcorr(3) = classCorr(kappa4, 20);
 kcorr(4) = classCorr(kappa6, 20);
 kcorr(5) = classCorr(kappa8, 20);
 kcorr(6) = classCorr(kappa10, 20);
+limCorr = classCorr(lim, 20)
 
 lkcorr(1) = classCorr(logical(kappa0), 20);
 lkcorr(2) = classCorr(logical(kappa0), 20);
@@ -97,6 +105,7 @@ lkcorr(3) = classCorr(logical(kappa4), 20);
 lkcorr(4) = classCorr(logical(kappa6), 20);
 lkcorr(5) = classCorr(logical(kappa8), 20);
 lkcorr(6) = classCorr(logical(kappa10), 20);
+lkCorr = classCorr(logical(lim), 20)
 
 disp('kcorr = ')
   kcorr
@@ -113,30 +122,35 @@ for i = 1:25
     kk6 = squeeze(kappa6(i,:,81:end));
     kk8 = squeeze(kappa8(i,:,81:end));
     kk10 = squeeze(kappa10(i,:,81:end));
+    lll = squeeze(lim(i, :, 81:end));
     kk0 = kk0(:);
     kk2 = kk2(:);
     kk4 = kk4(:);
     kk6 = kk6(:);
     kk8 = kk8(:);
     kk10 = kk10(:);
+    lll = lll(:);
     kk0 = kk0(logical(kk0));
     kk2 = kk2(logical(kk2));
     kk4 = kk4(logical(kk4));
     kk6 = kk6(logical(kk6));
     kk8 = kk8(logical(kk8));
     kk10 = kk10(logical(kk10));
+    lll = lll(logical(lll));
     meank0(i) = mean(kk0);
     meank2(i) = mean(kk2);
     meank4(i) = mean(kk4);
     meank6(i) = mean(kk6);
     meank8(i) = mean(kk8);
     meank10(i) = mean(kk10);
+    meanl(i) = mean(lll);
     vark0(i) = var(kk0);
     vark2(i) = var(kk2);
     vark4(i) = var(kk4);
     vark6(i) = var(kk6);
     vark8(i) = var(kk8);
     vark10(i) = var(kk10);
+    varl(i) = var(lll);
 end
 
 disp('means')
@@ -147,6 +161,8 @@ mean(meank6)
 mean(meank8)
 mean(meank10)
 
+disp('limited no kappa')
+mean(meanl)
 
 disp('variances')
 mean(vark0)
@@ -156,13 +172,23 @@ mean(vark6)
 mean(vark8)
 mean(vark10)
 
+disp('limited no kappa')
+mean(varl)
+
 
 %%%%%%%%%  histogrammage %%%%%%%%%% 
-%figure; hist(kk0(logical(kk0)), 100); set(gca, 'fontsize', 15);
+figure; hist(kk0(logical(kk0)), 100); set(gca, 'fontsize', 22);
+xlabel('Inhibitory synapse strength')
+ylabel('Counts')
+print -dpng 'hist0.png'
 %print -depsc2 'kappa0hist.eps'
 %figure; hist(kk0(kk0(logical(kk0))>-2.5), 100); set(gca, 'fontsize', 15);
 %print -depsc2 'kappa0histZoom.eps'
-%figure; hist(kk8(logical(kk8)), 100); set(gca, 'fontsize', 15);
+figure; hist(kk8(logical(kk8)), 100); set(gca, 'fontsize', 22);
+xlabel('Inhibitory synapse strength')
+ylabel('Counts')
+print -dpng 'hist8.png'
+
 %print -depsc2 'kappa8hist.eps'
 %figure; hist(kk10(logical(kk10)), 100); set(gca, 'fontsize', 15);
 %print -depsc2 'kappa10hist.eps'
@@ -209,6 +235,29 @@ p8 = clk8/(25*80*80)
 p10 = clk10/(25*80*80)
 
 
+%%%%% Final spectral abscissa
+sa0 = 0;
+sa2 = 0;
+sa4 = 0;
+sa6 = 0;
+sa8 = 0;
+sa10 = 0;
+for i = 1:25
+    
+    sa0 = sa0 + max(real(eig(squeeze(kappa0(i,:,:)))));
+    sa2 = sa2 + max(real(eig(squeeze(kappa2(i,:,:)))));
+    sa4 = sa4 + max(real(eig(squeeze(kappa4(i,:,:)))));
+    sa6 = sa6 + max(real(eig(squeeze(kappa6(i,:,:)))));
+    sa8 = sa8 + max(real(eig(squeeze(kappa8(i,:,:)))));
+    sa10 = sa10 + max(real(eig(squeeze(kappa10(i,:,:)))));
+    
+end
 
+disp('average SA values:')
 
-
+asa0 = sa0/25
+asa2 = sa2/25
+asa4 = sa4/25
+asa6 = sa6/25
+asa8 = sa8/25
+asa10 = sa10/25

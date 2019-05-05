@@ -170,6 +170,12 @@ void OptimiseWMat(double *W[], int *B[], double eps, int inhibNum, bool wPlast, 
             itLimit = int(ceil(itLimit*1.5));
         }
 
+        if(ssa < 0.7567)
+        {
+            cout << "limited to test vs kappa results" <<endl;
+            conv = true;
+        }
+        
         //cout <<endl <<endl;
         //~ cout <<"SSA on loop " << loopcount << ": " <<ssa <<endl; 
         

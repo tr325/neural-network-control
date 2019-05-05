@@ -38,14 +38,14 @@ int main(int argc, char* argv[])
         B[i] = new int[SIZE];
     }
 
-    bool pairwise = true;
+    bool pairwise = false;
     bool wholeNet = true;
     double kappa = 0;
     GenerateWMat(W, B, inhibCols, SIZE, pairwise, wholeNet, kappa);
     OutputMat("generatedW.ascii", W, SIZE);
     OutputMat("generatedB.ascii", B, SIZE);
     OptimiseWMat(W, B, eps, inhibCols, true, SIZE);
-    OutputMat("stabilizedWnewconv.ascii", W, SIZE);
+    OutputMat("limitedStabilizedW.ascii", W, SIZE);
     OutputMat("stabilizedB.ascii", B, SIZE);
     
     for(int i=0; i<SIZE; i++)
