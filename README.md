@@ -1,10 +1,11 @@
-#Why doesn't the brain explode?
+
+## Why doesn't the brain explode?
 
 This was my Master's project at university -- I apologise for the state of the codebase.
 
 The write-up of the project can be found in the `Report` directory.
 
-###Project outline
+### Project outline
 
 The project simulated complex neuronal dynamics, observing the stabilisation of large networks 
 of neurons using different models of inhibitory action. I then analysed connectivity patterns
