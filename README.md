@@ -1,9 +1,9 @@
 
 ## Why doesn't the brain explode?
 
-This was my Master's project at university -- I apologise for the state of the codebase.
+This was my Master's project at Cambridge University -- I apologise for the state of the codebase.
 
-The write-up of the project can be found in the `Report` directory.
+The [Final Report](https://github.com/tr325/neural-network-control/blob/master/Report/FinalReport.pdf) was submitted in 2014.
 
 ### Project outline
 
